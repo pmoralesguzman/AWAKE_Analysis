@@ -22,7 +22,7 @@ end
 
 pathCell = regexp(path, pathsep, 'split');
 
-paths = {'../AWAKE_Class',... all directories with analysis code
+paths = {'../AWAKE_Analysis',... all directories with analysis code
     'E:/AWAKE_Data',... for the external hard drive (must be set to E:/)
     'D:/AWAKE_Data_HD',... for the hard drive in the work laptop
     'D:\LCODE_CERN',...
