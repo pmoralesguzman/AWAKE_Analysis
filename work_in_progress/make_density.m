@@ -17,11 +17,12 @@ clear;
 % EXPERIMENTAL INFO:
 
 % parameters
-datadir = 'dr_302_s3';
-dump_list = [0:200];
+datadir = 'dr_26_antip';
+dump_list = [0:3];
 dataformat = 'mat';
 % species_name = '';
-species_name = 'proton_beam';
+species_name = 'electron_seed';
+xi_step_size = 0.02;
 
 % save parameters
 save_format = {'png'};
@@ -57,6 +58,7 @@ for n = 1:length(dump_list)
     O.raw_dataset = 'x'; O.direction = 'r'; O.getdata(); O.assign_raw();
     % O.raw_dataset = 'p'; O.direction = 'z'; O.getdata(); O.assign_raw();
     O.raw_dataset = 'q'; O.getdata(); O.assign_raw();
+    O.raw_dataset = 'w'; O.getdata(); O.assign_raw();
     %
     %     [~,~,~,zbins,rbins] = histcounts2(O.ntime + ...
     %         O.n_simulation_window - O.nz_raw,O.nr_raw,z_edges,r_edges);
@@ -69,8 +71,8 @@ for n = 1:length(dump_list)
     r_in = r_lims(1:end-1);
     r_ex = r_lims(2:end);
 
-
-    q = [O.q_raw;0;0];
+        
+    q = O.denorm_lcode_charge([O.w_raw;0;0],xi_step_size);
     rbins0 = [rbins;1;length(r_edges)-1];
     zbins0 = [zbins;1;length(z_edges)-1];
     chargematrix = accumarray([rbins0,zbins0],q);

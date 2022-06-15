@@ -66,6 +66,7 @@ classdef OsirisDenormalizer < handle & OsirisLoader
         
         % species density
         proton_beam; % proton bunch density
+        antiproton_beam; % antiproton bunch density
         plasma_electrons; % plasma electrons density
         electron_bunch; % accelerated electron bunch density
         electron_seed; % accelerated electron bunch density
@@ -247,6 +248,22 @@ classdef OsirisDenormalizer < handle & OsirisLoader
         function obj = denorm_Bfield(obj)
             error('NOT CODED (so far it had not been needed)');
         end % denorm_Bfield
+
+        function varargout = denorm_lcode_charge(obj,varargin)
+            obj.units = 'm';
+            if isempty(varargin{2})
+                error('Please input the xi step size as second argument.')
+            end
+            denorm_factor = (4*pi*obj.permittivity*obj.denorm_distance(varargin{2})...
+                *obj.e_mass_kg*obj.c_m^2)./(2*obj.e_charge_C^2);
+
+            if isempty(varargin)
+                varargout{1} = obj;
+            else
+                varargout{1} = varargin{1}*denorm_factor;
+                varargout{2} = obj;                
+            end
+        end % denorm_lcode_charge
          
         
         % --normalizing functions--

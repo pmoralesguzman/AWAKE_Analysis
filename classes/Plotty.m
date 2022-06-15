@@ -105,7 +105,7 @@ classdef Plotty < handle & OsirisDenormalizer
         % output
         waterfall_mat;
         waterfall_handle;
-        fig_handle;
+        fig_handle;plotty
         plot_handle;
         
 
@@ -872,7 +872,7 @@ classdef Plotty < handle & OsirisDenormalizer
                         %legend({'proton bunch','electron bunch'},'interpreter','latex');
                         % here2
                         end
-                    obj.species = 'proton_beam';
+                   obj.species = 'proton_beam';
                     obj.justPath = 0;
 
                         leg_handle = legend([plongprofile,plongprofile2],obj.extitles,'Interpreter','Latex');

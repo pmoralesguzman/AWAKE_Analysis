@@ -14,19 +14,19 @@
 % input
 %location = 'C:/LCODE_MPP'; % C:/LCODE_HP, E:/LCODE_MPP, /home/iwsatlas1/pmorales/LCODE_MPP/
 % datadirs = {'DW_lcode_x5_t4','DW_lcode_x5_r4','DW_lcode_x5_z4','DW_lcode_x5_m4'};
-datadirs = {'witfdr26'};
+datadirs = {'dr_26_antip'};
 
-properties = {'fields','raw','density'}; % raw 'fields'
+properties = {'raw'}; % raw 'fields'
 % properties = {'fields','raw','density'}; % raw 'fields'
-speciess = {'proton_beam'};
+speciess = {'electron_seed'};
 % speciess = {'electron_seed'};
 
-dump_list = [1:9];
+dump_list = [0:200];
 
 lcode_dump_factor = 1;
 
 
-O = OsirisLoader('plasmaden',2e14,'lcode_dump_factor',lcode_dump_factor);
+O = OsirisDenormalizer('plasmaden',2e14,'lcode_dump_factor',lcode_dump_factor);
 
 
 for ii = 1:length(datadirs)

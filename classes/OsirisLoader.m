@@ -23,6 +23,7 @@
 %
 %
 
+% pointer to add more species to lcode2mat: 2x3g56jh
 
 classdef OsirisLoader < handle
 
@@ -54,7 +55,7 @@ classdef OsirisLoader < handle
         downsample_z;
 
         % step size (normalized)
-        ndr; ndz;
+        ndr; ndz; % 2*beampop*e*c/IA / (dz/k) / N *np.ones(N)
 
         % track data
         tracks_time;
@@ -113,6 +114,7 @@ classdef OsirisLoader < handle
         nplasma_positrons; % plasma positron density
         nelectrons;
         ndensity_feature;
+        nantiproton_beam;
 
         %phasespace
         npr;
@@ -120,8 +122,9 @@ classdef OsirisLoader < handle
         % more species to come ...
 
         % raw_data
-        q_raw; % weights of each particle in the raw data
+        q_raw; % weights of each particle in the raw data (osiris), normalized charge of particles (lcode)
         tag; % tag of particle
+        w_raw; % weight of each particle (lcode)
 
         % raw_data (normalized)
         nz_raw; % long. pos. of particle
@@ -166,7 +169,7 @@ classdef OsirisLoader < handle
             p.addParameter('species', 'proton_beam', @(x) ismember(x,{'proton_beam',...
                 'electrons','electron_bunch','electron_seed','electron_beam',...
                 'antiproton_seed','proton_beamfront','plasma_electrons','plasma_positrons',...
-                'density_feature'}));
+                'density_feature','antiproton_beam'}));
 
             % For the fields, specify magnetic (b) or electrin (e)
             p.addParameter('field', 'e', @(x) ismember(x,{'e','b'}));
@@ -296,7 +299,7 @@ classdef OsirisLoader < handle
                             filename = ['charge',avg,'-',species_name];
                             obj.partialpath = [obj.datadir,'/',format_dir,'/DENSITY/',species_name,'/charge',avg,'/'];
                         case 'raw'
-                            if strcmp(obj.raw_dataset,'ene') || strcmp(obj.raw_dataset,'q') || strcmp(obj.raw_dataset,'tag')
+                            if ismember(obj.raw_dataset,{'ene','q','tag','w'})
                                 temp_direction = '';
                             end
                             property_name_file = [obj.raw_dataset,temp_direction];
@@ -604,6 +607,8 @@ classdef OsirisLoader < handle
                     obj.nE_raw = obj.ndataOut;
                 case 'tag'
                     obj.tag = obj.ndataOut;
+                case 'w'
+                    obj.w_raw = obj.ndataOut;
                 case 'x'
                     switch obj.direction
                         case 'z'
@@ -813,7 +818,7 @@ classdef OsirisLoader < handle
                     data_save_temp = sum(sum(data_save4D, 1), 3)*0.25;
                     data_save = reshape(data_save_temp, size(data_save,1)/2, size(data_save,2)/2);
                 end
-            end
+            end % si raw
 
             fclose(openID);
 
@@ -825,6 +830,7 @@ classdef OsirisLoader < handle
             %                 obj.ans_path = 1;
             %             end
             %             save_partialpath = [partialpath_handle(str2double(obj.ans_path{1})).path,'/MAT/'];
+
             save_partialpath = [partialpath_handle.path,'/MAT/'];
 
             switch obj.direction
@@ -868,27 +874,39 @@ classdef OsirisLoader < handle
 
                 case 'raw' %
 
-                    %{'ene','p','x','q','tag'}
+                    %{'ene','p','x','q','w','tag'}
                     % z,r,pz,pr,pa,q,w,id
                     % 1,2, 3, 4, 5,6,7, 8
 
-                    raw_dataset_s = {'x','p','q','tag'};
-                    proton_electron_index = obj.ndataOut(:,7) < 0;
+                    species_s = {'proton_beam','electron_seed','antiproton_beam',''};
 
-                    if any(proton_electron_index)
-                        species_s = {'proton_beam','electron_seed'};
-                    else
-                        species_s = {obj.species};
-                    end
+                    if ~ismember(obj.species,species_s)
+                        species_s = obj.species;
+                    end % if selecting another species loke electron_bunch, to have a corret name 
+                    
 
-                    for ss = 1:length(species_s)
+                    raw_dataset_s = {'x','p','q','w','tag'};
+                    % proton electron antiproton indices 
+                    proton_index = (obj.ndataOut(:,7) > 0) & (obj.ndataOut(:,6) < 1);
+                    electron_index = (obj.ndataOut(:,7) < 0) & (obj.ndataOut(:,6) > 0.99); % avoid rounding errors
+                    antiproton_index = (obj.ndataOut(:,7) < 0) & (obj.ndataOut(:,6) < 1);
+
+                    
+
+                    for ss = 1:(length(species_s)-1)
                         obj.species = species_s{ss};
-
+                        
+                        % 2x3g56jh
                         switch obj.species
                             case 'proton_beam'
-                                raw_data_temp = obj.ndataOut(~proton_electron_index,:);
-                            case 'electron_seed'
-                                raw_data_temp = obj.ndataOut(proton_electron_index,:);
+                                if ~any(proton_index); continue; end 
+                                raw_data_temp = obj.ndataOut(proton_index,:);
+                            case {'electron_seed','electron_bunch'}
+                                if ~any(electron_index); continue; end 
+                                raw_data_temp = obj.ndataOut(electron_index,:);
+                            case 'antiproton_beam'
+                                if ~any(antiproton_index); continue; end 
+                                raw_data_temp = obj.ndataOut(antiproton_index,:);
                         end
 
                         ds = 1;
@@ -904,19 +922,15 @@ classdef OsirisLoader < handle
                                     temp_direction_s = {'1','2'};
                                 case 'p'
                                     temp_direction_s = {'1','2','3'};
+                                case 'w'
+                                    temp_direction_s = {''};
                                 case 'tag'
                                     temp_direction_s = {''};
                             end % switch raw data set
 
                             for dd = 1:length(temp_direction_s)
                                 temp_direction = temp_direction_s{dd};
-
-                                if ds ~= 6
-                                    data_save = raw_data_temp(:,ds);
-                                else
-                                    data_save = raw_data_temp(:,7);
-                                    ds = ds + 1;
-                                end
+                                data_save = raw_data_temp(:,ds);
                                 ds = ds + 1;
 
                                 obj.partialpath = [save_partialpath,'RAW/',obj.species,...
@@ -937,17 +951,6 @@ classdef OsirisLoader < handle
                     obj.partialpath = [obj.datadir,'/',format_dir,'/TRACKS/'];
                     obj.fullpath = [obj.partialpath,obj.species,'-tracks-repacked',obj.trackfile_suffix,'.',obj.dataformat];
             end % switch property
-
-
-
-            %
-            %             switch obj.property
-            %                 case 'density'
-            %
-            %             end
-
-
-
 
         end %lcode2mat
 
@@ -1069,9 +1072,6 @@ classdef OsirisLoader < handle
 
         end %lcode2mat
 
-
-
-
         function openID = get_openID(obj)
 
             lcode_dump_char = sprintf('%05.5d',obj.lcode_time);
@@ -1083,20 +1083,20 @@ classdef OsirisLoader < handle
                     switch obj.species
                         case 'electrons'
                             species_letter = 'e';
-                        case {'proton_beam','electron_seed'}
-                            species_letter = 'b';
                         case 'ions'
                             species_letter = 'i';
+                        otherwise % proton_beam, electron_seed, electron_bunch, ...
+                            species_letter = 'b';
                     end
                     openID = fopen([obj.datadir,'/n',species_letter,lcode_dump_char,'.swp'],'r');
                 case 'raw'
                     switch obj.species
                         case 'electrons'
                             txt = 'pl';
-                        case {'proton_beam','electron_seed'}
-                            txt = 'tb';
                         case 'ions'
                             % nothing
+                        otherwise % proton_beam, electron_seed, electron_bunch, ...
+                            txt = 'tb';
                     end
                     openID = fopen([obj.datadir,'/',txt,lcode_dump_char,'.swp'],'r');
 

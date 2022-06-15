@@ -20,12 +20,12 @@ clear;
 % datadir = 'DW_lcode_x5_pi_rz2_th_m2_w3'; %''; DW_lcode_justelectron DW_justelectron
 % extradatadir = 'DW_lcode_x5_pi_rz2_th_m2'; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
-datadir = 'witfdr26'; %''; DW_lcode_justelectron DW_justelectron
+datadir = 'dr_26a'; %''; DW_lcode_justelectron DW_justelectron
 extradatadir = ''; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
 dataformat = 'mat';
 useAvg = 0;
-dump_list = 1:1:9;
+dump_list = 0:1:200;
 % dump_list = 15:1:15;
 
 % saving plot
@@ -41,11 +41,11 @@ include_lineout = 'both'; % 'no','both','field_lineout','density_profile'
 include_phasespace = 0; 
 
 % choose fields to plot
-wakefields_direction = 'long'; % trans, long
+wakefields_direction = 'trans'; % trans, long
 lineout_point = '0.02'; % cm
 
 % choose species density to plot
-species = 'proton_beam';    %proton_beam, electrons,  electron_seed
+species = 'electrons';    %proton_beam, electrons,  electron_seed
 
 % choose limits (in cm, must denormalize)
 trans_range = [0 0.11];
@@ -70,7 +70,7 @@ fig_number = 1;
 % directory to save the plots
 % plots_dir = ['plasma_ramp/fielden/',datadir,'dx'];
 % plots_dir = ['ep/fielden/','f302ce550_b_vs_pi'];
-plots_dir = ['kookjin/fielden/',datadir,'dx'];
+plots_dir = ['test/fielden/',datadir,'x'];
 
 switch datadir
     case 'r2l_202'
