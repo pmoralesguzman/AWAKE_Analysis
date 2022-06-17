@@ -1,5 +1,5 @@
-%____________________________________raw'___________lcode___________________________
-% Class with the main plotting function for the AWlcodeAKE Osiris Analysis
+%__________________________________________________________________________
+% Class with the main plotting function for the AWAKE Osiris Analysis
 % Matlab Package
 %
 % For use with: Osiris 4.4.4
@@ -94,6 +94,8 @@ classdef Plotty < handle & OsirisDenormalizer
 
         extradatadir;
 
+        
+
         % plot field density input
         property_plot;
         denormalize_flag;
@@ -101,6 +103,7 @@ classdef Plotty < handle & OsirisDenormalizer
         include_field_lineout;
         include_density_profile;
         include_phasespace_profile;
+        field_geometry;
 
         % output
         waterfall_mat;
@@ -176,6 +179,8 @@ classdef Plotty < handle & OsirisDenormalizer
 
             % field density plot options
             p.addParameter('mirror_flag', true, @(x) islogical(x) || x == 0 || x == 1);
+            p.addParameter('field_geometry', 'cartesian', @ (x) any(ismember(x,{'cartesian','cylindrical'})) || x == 0 || x == 1);
+            
 
             p.KeepUnmatched = true;
             p.parse(varargin{:});
@@ -208,7 +213,15 @@ classdef Plotty < handle & OsirisDenormalizer
             obj.exlegends             = p.Results.exlegends;
             obj.extitles              = p.Results.extitles;
             obj.mirror_flag           = p.Results.mirror_flag;
+            obj.field_geometry        = p.Results.field_geometry;
             obj.include_phasespace    = p.Results.include_phasespace;
+
+            if obj.field_geometry == 1
+                obj.field_geometry = 'cylindrical';
+            elseif obj.field_geometry == 0
+                obj.field_geometry = 'cartesian';
+            end % field geometry 1 
+
         end % constructor
 
         function obj = save_plot(obj,varargin)
@@ -320,7 +333,13 @@ classdef Plotty < handle & OsirisDenormalizer
 
             % mirroring for a better image, due to cylindrical symmetry
 
-            field_plot_mirrored = [-1*flip(field_plot);field_plot];
+            if strcmp(obj.field_geometry,'cartesian')
+                mirror_factor = -1;
+            elseif strcmp(obj.field_geometry,'cylindrical')
+                mirror_factor = 1;
+            end
+
+            field_plot_mirrored = [mirror_factor*flip(field_plot);field_plot];
 
             % Establish the maximum field value
             % the standard deviation is used as a measure the avoid
@@ -363,6 +382,8 @@ classdef Plotty < handle & OsirisDenormalizer
             p.addParameter('r_plot', 0, @(x) isfloat(x));
             p.addParameter('z_plot', 0, @(x) isfloat(x));
             p.addParameter('tile_number', 0, @(x) isfloat(x));
+            p.addParameter('plot_number', 1, @(x) isfloat(x));
+            p.addParameter('grad_color_triplet', 0, @(x) isfloat(x));
 
             p.parse(varargin{:});
 
@@ -370,11 +391,13 @@ classdef Plotty < handle & OsirisDenormalizer
             r_plot             = p.Results.r_plot;
             z_plot             = p.Results.z_plot;
             tile_number        = p.Results.tile_number;
+            plot_number        = p.Results.plot_number;
+            grad_color_triplet = p.Results.grad_color_triplet;
 
-            switch obj.species
-                case {'plasma_positrons','plasma_electrons'}
-                    density_plot = density_plot - median(density_plot,'all');
-            end
+%             switch obj.species
+%                 case {'positrons','electrons'}
+%                     density_plot = density_plot - median(density_plot,'all');
+%             end
 
             switch obj.plot_scale
                 case 'log'
@@ -395,7 +418,7 @@ classdef Plotty < handle & OsirisDenormalizer
             % the standard deviation is used as a measure the avoid
             % noisy peaks that sets a wrong scale for the opaqueness
             % get 3 times the std deviation with no weights
-            meanstd_density = 3*std(density_plot_mirrored,[],'all')+eps;
+            meanstd_density = 3*std(density_plot_mirrored,[],'all') + eps;
             max_opaqueness = 1;
             ind_opaque = max_opaqueness*density_plot_mirrored;
             ind_opaque(density_plot_mirrored > meanstd_density) = max_opaqueness*meanstd_density;
@@ -405,7 +428,7 @@ classdef Plotty < handle & OsirisDenormalizer
                 obj.tile_handle = tiledlayout(1,1);
             end
             
-            if obj.a
+            if plot_number > 1
                 old_ax_density = obj.ax_density;
             end
 
@@ -423,12 +446,25 @@ classdef Plotty < handle & OsirisDenormalizer
                 case 'linear'
                     imagesc(obj.ax_density,'XData',z_plot,'YData',r_plot,'CData',double(density_plot_mirrored>0),'alphadata',ind_opaque);
                     %                     grad = colorGradient([1 1 1],[0 0 0],2);
-                    grad = [1 1 1; 0 0 0];
-                    if obj.a
-                        grad = [221,110,15]/255;
-                        linkaxes([old_ax_density,obj.ax_density],'xy')
-                        old_ax_density.XTickLabel = [];
+                    switch plot_number
+                        case 1 
+                            grad = [1 1 1; 0 0 0];
+                        case 2 
+                            grad = [221,110,15]/255;
+                            linkaxes([old_ax_density,obj.ax_density],'xy')
+                            old_ax_density.XTickLabel = [];
+                            old_ax_density.YTickLabel = [];
+                        case 3
+                            grad = [8, 146, 208]/255;
+                            linkaxes([old_ax_density,obj.ax_density],'xy')
+                            old_ax_density.XTickLabel = [];
+                            old_ax_density.YTickLabel = [];
                     end
+                    
+                    if any(grad_color_triplet ~= 0)
+                        grad = grad_color_triplet;
+                    end
+
                     colormap(obj.ax_density,grad);
 
             end % switch plot scale
@@ -460,7 +496,13 @@ classdef Plotty < handle & OsirisDenormalizer
 
             % mirroring for a better image, due to cylindrical symmetry
 
-            phasespace_plot_mirrored = [1*flip(phasespace_plot);phasespace_plot];
+            if strcmp(obj.field_geometry,'cartesian')
+                mirror_factor = -1;
+            elseif strcmp(obj.field_geometry,'cylindrical')
+                mirror_factor = 1;
+            end
+
+            phasespace_plot_mirrored = [mirror_factor*flip(phasespace_plot);phasespace_plot];
 
             % Establish the maximum field value
             % the standard deviation is used as a measure the avoid
@@ -547,10 +589,10 @@ classdef Plotty < handle & OsirisDenormalizer
 
                 obj.dump = obj.dump_list(n);
 
-                i_extradatadir = 1;
+                i_secondimagesc = 1;
 
                 if (~strcmp(obj.extradatadir,'')) || obj.include_phasespace
-                    i_extradatadir = 2;
+                    i_secondimagesc = 2;
                 end
 
                 if obj.fig_number > 0
@@ -559,24 +601,30 @@ classdef Plotty < handle & OsirisDenormalizer
                     fig_double = figure;
                 end
 
-                if strcmp(obj.extradatadir,'') && ~obj.include_phasespace
-                    switch obj.include_lineout
-                        case {'density_profile','field_lineout'}
-                            obj.tile_handle = tiledlayout(fig_double,2,1);
-                            plot_position = [0.0471    0.2560    0.9081    0.5111];
-                            % plot_position = [0.0156    0.0880    0.5469    0.8958];
-                        case 'both'
-                            obj.tile_handle = tiledlayout(fig_double,3,1);
-                            plot_position = [0.0346    0.1231    0.9008    0.7356];
-                        otherwise
-                            obj.tile_handle = tiledlayout(fig_double,1,1);
-                            plot_position = [0.1 0.1 0.8 0.5];
-                    end
+                % if there is an extradatadir, it brings another fielden
+                % plot, and another phasespace plot (if required, barely
+                % used), maximum possible should be 6 tiles
+                total_number_of_plots = ...
+                    (~strcmp(obj.extradatadir,'') + 1)*(1 + obj.include_phasespace)...
+                    + obj.include_field_lineout + obj.include_density_profile;
 
-                else
-                    obj.tile_handle = tiledlayout(fig_double,4,1);
-                    plot_position = [0.0471    0.0560    0.9081    0.94];
+                obj.tile_handle = tiledlayout(fig_double,total_number_of_plots,1);
+
+                switch total_number_of_plots
+                    case 1
+                        plot_position = [0.1 0.1 0.8 0.5];
+                    case 2
+                        plot_position = [0.0471 0.2560 0.9081 0.5111];
+                    case 3 
+                        plot_position = [0.0346 0.1231 0.9008 0.7356];
+                    case 4 
+                        plot_position = [0.0471 0.0560 0.9081 0.94];
+                    case 5
+                        plot_position = [0.0471 0.0560 0.9081 0.94]; % not tested yet
+                    case 6
+                        plot_position = [0.0471 0.0560 0.9081 0.94]; % not tested yet
                 end
+
                 obj.tile_handle.TileSpacing = 'compact';
                 obj.tile_handle.Padding = 'compact';
 
@@ -584,6 +632,8 @@ classdef Plotty < handle & OsirisDenormalizer
                     fig_double.Units = 'normalized';
                     fig_double.OuterPosition = plot_position;
                 end
+
+                species_to_plot = {'electron_seed','antiproton_beam','electrons'};
 
                 % cell initialization 
                 field_plot_save = cell(2,1);
@@ -593,14 +643,17 @@ classdef Plotty < handle & OsirisDenormalizer
                 z_plot_save = cell(2,1);
                 z_lineout_den_save = cell(2,1);
                 z_lineout_fld_save = cell(2,1);
+                %density_plot = cell(length(species_to_plot),1);
 
-                for i_ex = 1:i_extradatadir %-------- extra datadir loop
+                
+
+                for i_ex = 1:i_secondimagesc %-------- extra datadir loop
 
                     if i_ex == 2 && (~obj.include_phasespace)%%-----------------new ex
                         field_plot_save{1} = field_plot;
                         density_plot_save{1} = density_plot;
                         if isfile(e_fullpath)
-                        density_plot_e_save{1} = density_plot_e;
+                            density_plot_e_save{1} = density_plot_e;
                         end
                         
                         r_plot_save{1} = r_plot;
@@ -624,8 +677,8 @@ classdef Plotty < handle & OsirisDenormalizer
                         (field_plot == 0 && density_plot == 0);
 
                     if load_data_switch
-                        [field_plot,density_plot,phasespace_plot,r_plot,z_plot,z_lineout_den,z_lineout_fld] = obj.load_data_plot();
-                        obj.mirror_flag  = true;
+                        [field_plot,~,phasespace_plot,r_plot,z_plot,z_lineout_den,z_lineout_fld] = obj.load_data_plot();
+                        obj.mirror_flag = true;
                     end
 
                     if i_ex == 2 && (~obj.include_phasespace)%%-----------------new ex
@@ -651,24 +704,43 @@ classdef Plotty < handle & OsirisDenormalizer
                     end
 
                     if ismember(obj.property_plot,{'density','both'})
-                        obj.plot_density('density_plot',density_plot,'r_plot',r_plot,'z_plot',z_plot,'tile_number',i_ex);
-                        obj.ax_density.FontSize = fontsize_all;
-                        % here1
-                        obj.property = 'density';
-                        obj.species = 'electron_seed';
-                        obj.justPath = 1;
-                        obj.getdata();
-                        obj.justPath = 0;
-                        e_fullpath = which(obj.fullpath);
-                        if isfile(e_fullpath)
-                            obj.a = 1;
-                            obj.getdata(); obj.assign_density(); 
-                            density_plot_e = obj.denorm_density(obj.nelectron_seed);
-                            obj.plot_density('density_plot',density_plot_e,'r_plot',r_plot,'z_plot',z_plot,'tile_number',i_ex);
-                            obj.a = 0;
+                        %%-------------------------------------------------------------------
+                        %%-------------------------------------------------------------------
+                        %%-------------------------------------------------------------------
+                        %%-------------------------------------------------------------------
+                        %%-------------------------------------------------------------------
+                        %%-------------------------------------------------------------------
+                        save_property_plot = obj.property_plot;
+                        obj.property_plot = 'density'; % later change load data plot to only load field or density
+                        for i_density = 1:length(species_to_plot)
+                            obj.species = species_to_plot{i_density};
+                            [~,density_plot_temp,~,r_plot,z_plot,~,~] = obj.load_data_plot();
+                            density_plot_cell{i_density} = density_plot_temp;
+                            clear density_plot_temp;
+                            obj.plot_density('density_plot',density_plot_cell{i_density},...
+                                'r_plot',r_plot,'z_plot',z_plot,'tile_number',i_ex,'plot_number',i_density);
                         end
-                        obj.species = 'proton_beam';
-                      %  obj.species = 'electrons';
+                        obj.property_plot = save_property_plot;
+
+
+%                         obj.plot_density('density_plot',density_plot,'r_plot',r_plot,'z_plot',z_plot,'tile_number',i_ex);
+%                         obj.ax_density.FontSize = fontsize_all;
+%                         % here1
+%                         obj.property = 'density';
+%                         obj.species = 'electron_seed';
+%                         obj.justPath = 1;
+%                         obj.getdata();
+%                         obj.justPath = 0;
+%                         e_fullpath = which(obj.fullpath);
+%                         if isfile(e_fullpath)
+%                             obj.a = 1;
+%                             obj.getdata(); obj.assign_density(); 
+%                             density_plot_e = obj.denorm_density(obj.nelectron_seed);
+%                             obj.plot_density('density_plot',density_plot_e,'r_plot',r_plot,'z_plot',z_plot,'tile_number',i_ex);
+%                             obj.a = 0;
+%                         end
+% %                         obj.species = 'proton_beam';
+%                        obj.species = 'electrons';
                         obj.ax_density.FontSize = fontsize_all;
                     end
 
@@ -778,7 +850,7 @@ classdef Plotty < handle & OsirisDenormalizer
                     %%%____________________________________________________
                     %                 ylim([-2.1,2.1]);
 
-                    if i_extradatadir == 2 && (~obj.include_phasespace)
+                    if i_secondimagesc == 2 && (~obj.include_phasespace)
                        % title(obj.extitles{i_ex},'Interpreter','Latex');
                     end
 
@@ -809,22 +881,24 @@ classdef Plotty < handle & OsirisDenormalizer
                     end
 
                     if ismember(obj.include_lineout,{'density_profile','field_lineout','both'})
-                        obj.ax_density.XTickLabel = [];
+                       obj.ax_density.XTickLabel = [];
                         
-                        obj.ax_field.XTickLabel = [];
+                       obj.ax_field.XTickLabel = [];
                     end
 
 
-                % if ismember(obj.include_lineout,{'density_profile','both'})
                 if obj.include_density_profile
 
                     r_lineplot = linspace(0,max(r_plot),size(density_plot,1));
                     ir = (r_lineplot < obj.ylinepos(2)*10) & (r_lineplot > obj.ylinepos(1)*10);
 
                     int_option = 'sum'; % just sum = density
-                    long_profile = obj.cylindrical_radial_integration(r_lineplot(ir)/10,density_plot(ir,:),int_option); %just sum
+                    % long_profile = obj.cylindrical_radial_integration(r_lineplot(ir)/10,density_plot(ir,:),int_option); %just sum
                     %                     long_profile = density_plot(obj.lineout_point,:);
-                    long_profile = smooth(long_profile,obj.plasma_wavelength/13.62/8,'loess');
+                    % HARD CODED
+                    long_profile = density_plot(10,:);
+                    
+                    %long_profile = smooth(long_profile,obj.plasma_wavelength/13.62/8,'loess');
 
                     ax_longprofile = nexttile;
 
@@ -833,7 +907,9 @@ classdef Plotty < handle & OsirisDenormalizer
                     if isfile(e_fullpath)
                         hold on
                         long_profile_e = obj.cylindrical_radial_integration(r_lineplot(ir)/10,abs(density_plot_e(ir,:)),int_option); %just sum
-                        long_profile_e = smooth(long_profile_e,obj.plasma_wavelength/13.62/8,'loess');
+                        % HARD CODED
+                        long_profile_e = density_plot_e(10,:);
+                        %long_profile_e = smooth(long_profile_e,obj.plasma_wavelength/13.62/8,'loess');
                         if length(z_lineout_den) == length(long_profile_e)
                             % nothing
                         else
@@ -846,7 +922,7 @@ classdef Plotty < handle & OsirisDenormalizer
                     end
 
 
-                    if i_extradatadir == 2 && (~obj.include_phasespace) %----------------------------- new ex
+                    if i_secondimagesc == 2 && (~obj.include_phasespace) %----------------------------- new ex
 
                         density_plot2 = density_plot_save{2};
                         density_plot_e2 = density_plot_e_save{2};
@@ -872,7 +948,8 @@ classdef Plotty < handle & OsirisDenormalizer
                         %legend({'proton bunch','electron bunch'},'interpreter','latex');
                         % here2
                         end
-                   obj.species = 'proton_beam';
+%                    obj.species = 'proton_beam';
+                        obj.species = 'electrons';
                     obj.justPath = 0;
 
                         leg_handle = legend([plongprofile,plongprofile2],obj.extitles,'Interpreter','Latex');
@@ -970,7 +1047,7 @@ classdef Plotty < handle & OsirisDenormalizer
                     yline(0);
                     % 0.929 0.694 0.125
 
-                    if i_extradatadir == 2 && (~obj.include_phasespace) %----------------------------- new ex
+                    if i_secondimagesc == 2 && (~obj.include_phasespace) %----------------------------- new ex
                         obj.lineout_point = lineout_point_char;
 
                         field_plot2 = field_plot_save{2};
@@ -1124,19 +1201,27 @@ classdef Plotty < handle & OsirisDenormalizer
 
                 case 'density'
                     obj.property = 'density';
+                    obj.justPath = 1;
                     obj.getdata();
-                    if obj.denormalize_flag
-                        obj.trim_data();
-                        obj.denorm_density();
-                        density_plot = obj.(obj.species);
+                    obj.justPath = 0;
+                    species_fullpath = which(obj.fullpath);
+                    if isfile(species_fullpath)
+                        obj.justPath = 0;
+                        obj.getdata();
+                        if obj.denormalize_flag
+                            obj.trim_data();
+                            obj.denorm_density();
+                            density_plot = obj.(obj.species);
+                        else
+                            density_plot = obj.ndataOut;
+                        end % denorm flag
+                        z_lineout_den = obj.dtime + obj.simulation_window - obj.z;
+                        z_lineout = z_lineout_den;
                     else
-                        density_plot = obj.ndataOut;
-                    end % denorm flag
-                    z_lineout_den = obj.dtime + obj.simulation_window - obj.z;
-                    z_lineout = z_lineout_den;
+                        warning(['No ',obj.species,' file found, skipping for plot.'])
+                    end 
+
                 case 'both'
-
-
                     obj.property = 'density';
                     obj.getdata();
 
@@ -1167,12 +1252,6 @@ classdef Plotty < handle & OsirisDenormalizer
                         density_plot = obj.(obj.species);
                     end % denorm flag
             end % switch property_plot
-
-
-
-            %             intnear1500 = floor(length(density_plot)/1500);
-            %             density_plot = density_plot(:,end-intnear1500*1500+1:end);
-            %             density_plot = squeeze(sum(reshape(density_plot,size(density_plot,1),intnear1500,[]),2));
 
             r_plot = [-max(obj.r),max(obj.r)]*10; % in mm
             % z_plot = ([min(obj.z),max(obj.z)]-obj.simulation_window)/100; % in m
@@ -1279,7 +1358,7 @@ classdef Plotty < handle & OsirisDenormalizer
                     obj.a = 0;
                 end
                % obj.species = 'proton_beam'; 
-               %  obj.species = 'electrons';
+                obj.species = 'electrons';
  
                 if obj.denormalize_flag
                     if obj.title_flag

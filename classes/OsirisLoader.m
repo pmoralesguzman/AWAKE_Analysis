@@ -168,7 +168,7 @@ classdef OsirisLoader < handle
             % For density or raw, specify the species name
             p.addParameter('species', 'proton_beam', @(x) ismember(x,{'proton_beam',...
                 'electrons','electron_bunch','electron_seed','electron_beam',...
-                'antiproton_seed','proton_beamfront','plasma_electrons','plasma_positrons',...
+                'antiproton_seed','proton_beamfront','electrons','positrons',...
                 'density_feature','antiproton_beam'}));
 
             % For the fields, specify magnetic (b) or electrin (e)
@@ -275,15 +275,7 @@ classdef OsirisLoader < handle
                     format_dir = 'MAT';
             end
 
-            switch obj.species
-                case 'plasma_electrons'
-                    species_name = 'electrons';
-                case 'plasma_positrons'
-                    species_name = 'positrons';
-                otherwise
-                    species_name = obj.species;
-
-            end
+            species_name = obj.species;
 
             switch obj.property
                 case 'fields'
@@ -878,11 +870,11 @@ classdef OsirisLoader < handle
                     % z,r,pz,pr,pa,q,w,id
                     % 1,2, 3, 4, 5,6,7, 8
 
-                    species_s = {'proton_beam','electron_seed','antiproton_beam',''};
+%                     species_s = {'proton_beam','electron_seed','antiproton_beam',''};
 
-                    if ~ismember(obj.species,species_s)
-                        species_s = obj.species;
-                    end % if selecting another species loke electron_bunch, to have a corret name 
+%                     if ~ismember(obj.species,species_s)
+%                         species_s = obj.species;
+%                     end % if selecting another species loke electron_bunch, to have a corret name 
                     
 
                     raw_dataset_s = {'x','p','q','w','tag'};
@@ -893,8 +885,8 @@ classdef OsirisLoader < handle
 
                     
 
-                    for ss = 1:(length(species_s)-1)
-                        obj.species = species_s{ss};
+                    for ss = 1:1 %(length(species_s)-1)
+                        %obj.species = species_s{ss};
                         
                         % 2x3g56jh
                         switch obj.species

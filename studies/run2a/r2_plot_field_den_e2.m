@@ -20,12 +20,12 @@ clear;
 % datadir = 'DW_lcode_x5_pi_rz2_th_m2_w3'; %''; DW_lcode_justelectron DW_justelectron
 % extradatadir = 'DW_lcode_x5_pi_rz2_th_m2'; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
-datadir = 'dr_26a'; %''; DW_lcode_justelectron DW_justelectron
+datadir = 'dr_26'; %''; DW_lcode_justelectron DW_justelectron
 extradatadir = ''; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
 dataformat = 'mat';
 useAvg = 0;
-dump_list = 0:1:0;
+dump_list = 0:1:200;
 % dump_list = 15:1:15;
 
 % saving plot
@@ -39,7 +39,6 @@ plasmaden = 2e14; % !!!!!! 2e14, 7e14
 property_plot = 'both'; % density, wakefields, both
 include_lineout = 'both'; % 'no','both','field_lineout','density_profile'
 include_phasespace = 0; 
-field_geometry = 'cylindrical';
 
 % choose fields to plot
 wakefields_direction = 'trans'; % trans, long
@@ -69,6 +68,8 @@ fig_number = 1;
 
 
 % directory to save the plots
+% plots_dir = ['plasma_ramp/fielden/',datadir,'dx'];
+% plots_dir = ['ep/fielden/','f302ce550_b_vs_pi'];
 plots_dir = ['test/fielden/',datadir,'x'];
 
 switch datadir
@@ -153,12 +154,11 @@ P = Plotty('datadir',datadir,'extradatadir',extradatadir,'dataformat',dataformat
     'property_plot',property_plot,'denormalize_flag',denormalize_flag,...
     'plot_density_lims',plot_density_lims,'plot_field_lims',plot_field_lims,...
     'make_pause',make_pause,'fig_number',fig_number,...
-    'extitles',extitles,'exlegends',exlegends,...
-    'field_geometry',field_geometry);%,...
+    'extitles',extitles,'exlegends',exlegends);%,...
     %'plot_name',datadir);
 
 figure(fig_number);
-P.plot_field_density('ylinepos',[-0.02,0.02],'ylineflag',1,...
+P.plot_field_density('ylinepos',[-0.0037,0.0037],'ylineflag',1,...
     'xlinepos',[0.423726],'xlineflag',0,...
     'include_lineout',include_lineout,...
     'include_density_profile',1,'include_field_lineout',1); %#ok<NBRAK> 
