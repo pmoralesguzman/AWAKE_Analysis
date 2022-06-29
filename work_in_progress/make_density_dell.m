@@ -17,11 +17,11 @@ clear;
 % EXPERIMENTAL INFO:
 
 % parameters
-datadir = 'dr_26_antip';
-dump_list = [0:200];
+datadir = 'r2l_302_c_e550_l';
+dump_list = [0:100];
 dataformat = 'mat';
 % species_name = '';
-species_name = 'antiproton_beam';
+species_name = 'proton_beam';
 xi_step_size = 0.02;
 
 % save parameters

@@ -20,12 +20,12 @@ clear;
 % datadir = 'DW_lcode_x5_pi_rz2_th_m2_w3'; %''; DW_lcode_justelectron DW_justelectron
 % extradatadir = 'DW_lcode_x5_pi_rz2_th_m2'; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
-datadir = 'dr_26'; %''; DW_lcode_justelectron DW_justelectron
+datadir = 'r2l_302_c_pi_e550_l'; %''; DW_lcode_justelectron DW_justelectron
 extradatadir = ''; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
 dataformat = 'mat';
 useAvg = 0;
-dump_list = 0:1:200;
+dump_list = 100:1:100;
 % dump_list = 15:1:15;
 
 % saving plot
@@ -45,7 +45,7 @@ wakefields_direction = 'trans'; % trans, long
 lineout_point = '0.02'; % cm
 
 % choose species density to plot
-species = 'electrons';    %proton_beam, electrons,  electron_seed
+species = 'proton_beam';    %proton_beam, electrons,  electron_seed
 
 % choose limits (in cm, must denormalize)
 trans_range = [0 0.11];
@@ -70,7 +70,7 @@ fig_number = 1;
 % directory to save the plots
 % plots_dir = ['plasma_ramp/fielden/',datadir,'dx'];
 % plots_dir = ['ep/fielden/','f302ce550_b_vs_pi'];
-plots_dir = ['test/fielden/',datadir,'x'];
+plots_dir = ['test/fielden/',datadir,'lx'];
 
 switch datadir
     case 'r2l_202'
@@ -158,7 +158,7 @@ P = Plotty('datadir',datadir,'extradatadir',extradatadir,'dataformat',dataformat
     %'plot_name',datadir);
 
 figure(fig_number);
-P.plot_field_density('ylinepos',[-0.0037,0.0037],'ylineflag',1,...
+P.plot_field_density('ylinepos',[-0.02,0.02],'ylineflag',1,...
     'xlinepos',[0.423726],'xlineflag',0,...
     'include_lineout',include_lineout,...
     'include_density_profile',1,'include_field_lineout',1); %#ok<NBRAK> 

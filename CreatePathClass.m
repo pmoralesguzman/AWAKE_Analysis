@@ -26,6 +26,7 @@ paths = {'../AWAKE_Analysis',... all directories with analysis code
     'E:/AWAKE_Data',... for the external hard drive (must be set to E:/)
     'D:/AWAKE_Data_HD',... for the hard drive in the work laptop
     'D:\LCODE_CERN',...
+    'D:\AWAKE_Data_SSD',...
     'C:/AWAKE_Data_MPP',... for the hard drive desktop PC at MPP
     'C:/AWAKE_Data_laptop',... for the hard drive in the personal laptop
     '../simulations',... for the server
