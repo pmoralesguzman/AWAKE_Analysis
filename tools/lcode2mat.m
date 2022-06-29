@@ -14,7 +14,7 @@
 % input
 %location = 'C:/LCODE_MPP'; % C:/LCODE_HP, E:/LCODE_MPP, /home/iwsatlas1/pmorales/LCODE_MPP/
 % datadirs = {'DW_lcode_x5_t4','DW_lcode_x5_r4','DW_lcode_x5_z4','DW_lcode_x5_m4'};
-datadirs = {'testce'};
+datadirs = {'testcu'};
 
 properties = {'raw','fields','density'}; % raw 'fields'
 % properties = {'fields','raw','density'}; % raw 'fields'
