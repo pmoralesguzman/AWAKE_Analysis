@@ -18,10 +18,10 @@ datadirs = {'testcu'};
 
 properties = {'raw','fields','density'}; % raw 'fields'
 % properties = {'fields','raw','density'}; % raw 'fields'
-speciess = {'electron_seed'};
+speciess = {'electron_seed', 'proton_beam'};  %proton_beam
 % speciess = {'electron_seed'};
 
-dump_list = [0:100];
+dump_list = [0:200];
 
 lcode_dump_factor = 1;
 
