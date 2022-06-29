@@ -20,12 +20,12 @@ clear;
 % datadir = 'DW_lcode_x5_pi_rz2_th_m2_w3'; %''; DW_lcode_justelectron DW_justelectron
 % extradatadir = 'DW_lcode_x5_pi_rz2_th_m2'; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
-datadir = 'r2l_2_noe_2s'; %''; DW_lcode_justelectron DW_justelectron
-extradatadir = ''; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
+datadir = 'r2l_302_c_e550_l'; %''; DW_lcode_justelectron DW_justelectron
+extradatadir = ''; %r2l_302_c_pi_e550_l, 'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
 dataformat = 'mat';
 useAvg = 0;
-dump_list = 0:1:100;
+dump_list = 0:1:10;
 % dump_list = 15:1:15;
 
 % saving plot
@@ -36,8 +36,9 @@ save_format = {'png'}; % eps, fig
 plasmaden = 2e14; % !!!!!! 2e14, 7e14 
 
 % choose property to plot
-property_plot = {'density'}; % density, wakefields, both
-include_lineout = 'no'; % 'no','both','field_lineout','density_profile'
+property_plot = {'density','wakefields'}; % density, wakefields, both
+species_to_plot = {'proton_beam','electron_seed'}; 
+include_lineout = 'both'; % 'no','both','field_lineout','density_profile'
 include_phasespace = 0; 
 field_geometry = 'cartesian'; % cylindrical
 on_axis = 'int'; 
@@ -47,16 +48,16 @@ wakefields_direction = 'trans'; % trans, long
 lineout_point = '0.02'; % cm
 
 % choose species density to plot
-species = {'proton_beam','electrons'};    %proton_beam, electrons,  electron_seed
+species = {'electrons'};    %proton_beam, electrons,  electron_seed
 
 % choose limits (in cm, must denormalize)
-trans_range = [0 0.08];
-xi_range = [1 0];
+trans_range = [0 0.11];
+xi_range = [10 0];
 plot_density_lims = [0 1e10];
-plot_field_lims = [-inf inf];
+plot_field_lims = [-210 210];
 
 % create movie or not
-create_movie = 0;
+create_movie = 1;
 
 % choose between normalized and denormalized units
 denormalize_flag = 1; % true, false
@@ -70,7 +71,7 @@ fig_number = 1;
 
 
 % directory to save the plots
-plots_dir = ['eden/fielden/',datadir,'x'];
+plots_dir = ['eps2022/fielden/',datadir,''];
 
 switch datadir
     case 'r2l_202'
@@ -161,13 +162,14 @@ P = Plotty('datadir',datadir,'extradatadir',extradatadir,'dataformat',dataformat
     'plot_density_lims',plot_density_lims,'plot_field_lims',plot_field_lims,...
     'make_pause',make_pause,'fig_number',fig_number,...
     'extitles',extitles,'exlegends',exlegends,...
-    'field_geometry',field_geometry,'on_axis',on_axis);%,...
+    'field_geometry',field_geometry,'on_axis',on_axis,...
+    'species_to_plot',species_to_plot);%,...
     %'plot_name',datadir);
 
 figure(fig_number);
 P.plot_field_density('ylinepos',[-0.02,0.02],'ylineflag',1,...
     'xlinepos',[0.423726],'xlineflag',0,...
-    'include_density_profile',0,'include_field_lineout',0); %#ok<NBRAK> 
+    'include_density_profile',1,'include_field_lineout',1); %#ok<NBRAK> 
 
 
 

@@ -14,14 +14,14 @@
 % input
 %location = 'C:/LCODE_MPP'; % C:/LCODE_HP, E:/LCODE_MPP, /home/iwsatlas1/pmorales/LCODE_MPP/
 % datadirs = {'DW_lcode_x5_t4','DW_lcode_x5_r4','DW_lcode_x5_z4','DW_lcode_x5_m4'};
-datadirs = {'testcu'};
+datadirs = {'r2l_2_noe_2s'};
 
-properties = {'raw','fields','density'}; % raw 'fields'
-% properties = {'fields','raw','density'}; % raw 'fields'
-speciess = {'electron_seed', 'proton_beam'};  %proton_beam
+properties = {'density'}; % raw 'fields'
+% properties = {'fields','density','raw'}; % raw 'fields'
+speciess = {'proton_beam'};
 % speciess = {'electron_seed'};
 
-dump_list = [0:200];
+dump_list = [0:100];
 
 lcode_dump_factor = 1;
 

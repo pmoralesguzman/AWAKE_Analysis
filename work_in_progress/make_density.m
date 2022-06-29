@@ -17,8 +17,8 @@ clear;
 % EXPERIMENTAL INFO:
 
 % parameters
-datadir = 'dr_26a';
-dump_list = [0:3];
+datadir = 'r2l_302_c_pi_e550_l';
+dump_list = [0:100];
 dataformat = 'mat';
 % species_name = '';
 species_name = 'electron_seed';
@@ -52,6 +52,12 @@ z_edges = [-inf,z_lims(2:end-1),inf];
 for n = 1:length(dump_list)
     close all
     O.dump = dump_list(n);
+
+    O.property = 'fields';
+
+    O.getdata();
+
+    O.property = 'raw';
 
     % get data
     O.raw_dataset = 'x'; O.direction = 'z'; O.getdata(); O.assign_raw();

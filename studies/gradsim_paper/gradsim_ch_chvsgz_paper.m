@@ -179,7 +179,7 @@ fontsize_annotation = 9; % points (1 point = 1/72 inches = 0.0353 cm; 9 point = 
 fontsize_label = 0.4; % cm
 
 for d = 1:length(datadirs)
-    hold onn
+    hold on
     plot(plot_z(d,:),charge_fraction(d,:),line_style{d},'LineWidth',2)
     hold off
 end
