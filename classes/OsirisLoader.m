@@ -903,7 +903,7 @@ classdef OsirisLoader < handle
 
                         ds = 1;
 
-                        for raw = 1:4
+                        for raw = 1:5
                             obj.raw_dataset = raw_dataset_s{raw};
 
 

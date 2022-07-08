@@ -21,16 +21,16 @@ clear;
 % extradatadir = 'DW_lcode_x5_pi_rz2_th_m2'; %'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
 datadir = 'r2l_302_c_e550_l'; %''; DW_lcode_justelectron DW_justelectron
-extradatadir = ''; %r2l_302_c_pi_e550_l, 'DWdc3_lcode_x1_pi'; DW_lcode_nofront
+extradatadir = 'r2l_302_c_pi_e550_l'; %r2l_302_c_pi_e550_l, 'DWdc3_lcode_x1_pi'; DW_lcode_nofront
 
 dataformat = 'mat';
 useAvg = 0;
-dump_list = 0:1:10;
+dump_list = [42];
 % dump_list = 15:1:15;
 
 % saving plot
-save_flag = 1;
-save_format = {'png'}; % eps, fig
+save_flag = 0;
+save_format = {'png','pdf'}; % eps, fig
 
 % plasma properties
 plasmaden = 2e14; % !!!!!! 2e14, 7e14 
@@ -38,7 +38,6 @@ plasmaden = 2e14; % !!!!!! 2e14, 7e14
 % choose property to plot
 property_plot = {'density','wakefields'}; % density, wakefields, both
 species_to_plot = {'proton_beam','electron_seed'}; 
-include_lineout = 'both'; % 'no','both','field_lineout','density_profile'
 include_phasespace = 0; 
 field_geometry = 'cartesian'; % cylindrical
 on_axis = 'int'; 
@@ -48,7 +47,7 @@ wakefields_direction = 'trans'; % trans, long
 lineout_point = '0.02'; % cm
 
 % choose species density to plot
-species = {'electrons'};    %proton_beam, electrons,  electron_seed
+%species = {'electrons'};    %proton_beam, electrons,  electron_seed
 
 % choose limits (in cm, must denormalize)
 trans_range = [0 0.11];
@@ -106,8 +105,8 @@ switch datadir
         extitles{1} = ['density cut (2 $\sigma_z$) e- at $\xi = 4$ cm'];
         exlegends{1} = ['density cut (2 $\sigma_z$) e- at $\xi = 4$ cm'];
     case 'r2l_302_c_e550_l'
-        extitles{1} = ['e- at $\xi = 4$ cm'];
-        exlegends{1} = ['e- at $\xi = 4$ cm'];
+        extitles{1} = ['case w/$\mathrm{e^-}$ bunch at $\xi = 4$ cm'];
+        exlegends{1} = ['case w/$\mathrm{e^-}$ bunch at $\xi = 4$ cm'];
     otherwise
         extitles{1} = '';
         exlegends{1} = '';
@@ -143,8 +142,8 @@ switch extradatadir
         extitles{2} = ['density cut (2 $\sigma_z$) e- at $\xi = 4 + \lambda_{pe}/2$ cm'];
         exlegends{2} = ['density cut (2 $\sigma_z$) e- at $\xi = 4 + \lambda_{pe}/2$ cm'];
     case 'r2l_302_c_pi_e550_l'
-        extitles{2} = ['e- at $\xi = 4 + \lambda_{pe}/2$ cm'];
-        exlegends{2} = ['e- at $\xi = 4 + \lambda_{pe}/2$ cm'];
+        extitles{2} = ['case w/$\mathrm{e^-}$ bunch at $\xi = 4 + \lambda_{pe}/2$ cm'];
+        exlegends{2} = ['case w/$\mathrm{e^-}$ bunch at $\xi = 4 + \lambda_{pe}/2$ cm'];
     otherwise
         extitles{2} = '';
         exlegends{2} = '';
@@ -156,7 +155,7 @@ P = Plotty('datadir',datadir,'extradatadir',extradatadir,'dataformat',dataformat
     'save_flag',save_flag,'save_format',save_format,'plots_dir',plots_dir,...
     'create_movie',create_movie,...
     'plasmaden',plasmaden,'trans_range',trans_range,'xi_range',xi_range,...
-    'wakefields_direction',wakefields_direction,'species',species,...
+    'wakefields_direction',wakefields_direction,...
     'lineout_point',lineout_point,...
     'property_plot',property_plot,'denormalize_flag',denormalize_flag,...
     'plot_density_lims',plot_density_lims,'plot_field_lims',plot_field_lims,...
@@ -169,7 +168,8 @@ P = Plotty('datadir',datadir,'extradatadir',extradatadir,'dataformat',dataformat
 figure(fig_number);
 P.plot_field_density('ylinepos',[-0.02,0.02],'ylineflag',1,...
     'xlinepos',[0.423726],'xlineflag',0,...
-    'include_density_profile',1,'include_field_lineout',1); %#ok<NBRAK> 
+    'include_density_profile',1,'include_field_lineout',1,...
+    'include_phasespace_profile',0); %#ok<NBRAK> 
 
 
 

@@ -26,12 +26,12 @@ plot_name = ['fieldvszxi'];
 load('color_red_to_blue.mat'); % ccrb
 % color selection
 % i_color = [3,5,7];
-i_color = [1:9];
+i_color = [2,8];
 
 % cell plotting parameters
 datadirs = {'r2l_302_c_e550_l','r2l_302_c_pi_e550_l'};
 
-leg = {'e- bunch no shift','e- bunch shifted by $\lambda_{pe}/2$'};
+leg = {['case w/$\mathrm{e^-}$ bunch at $\xi = 4$ cm'],['case w/$\mathrm{e^-}$ bunch at $\xi = 4 + \lambda_{pe}/2$ cm']};
 line_style = {':','--','-.','-','-','-','-.','--',':'};
 % line_style = {'--','-','-.'};
 
@@ -122,6 +122,7 @@ fig_cvsz.OuterPosition = [100 100 900 400];
 tt = tiledlayout(1,2);
 tt.TileSpacing = 'compact';
 tt.Padding = 'compact';
+letters = {'a)','b)'};
 for xi = 1:length(dephasing_xi)
     ax_fld(xi) = nexttile;
     ax_fld(xi).FontSize = fontsize_label;
@@ -132,12 +133,12 @@ for xi = 1:length(dephasing_xi)
         plot(squeeze(plot_z(xi,d,:)),squeeze(fieldvsz(xi,d,:)),...
             line_style{d},'LineWidth',2,'color',ccrb(i_color(d),:))
     end % datadir
-    xline(4,'--','LineWidth',1,'color',[0 0.4470 0.7410]);
+    %xline(4,'--','LineWidth',1,'color',[0 0.4470 0.7410]);
     hold off
     
     switch dephasing_xi(xi)
         case 3
-            position_word = '(front of thebunch)';
+            position_word = '(front of the bunch)';
         case 7
             position_word = '(back of the bunch)';
         case 1
@@ -146,6 +147,9 @@ for xi = 1:length(dephasing_xi)
     title(['$\xi_0 = ',num2str(dephasing_xi(xi)),'$ cm ',position_word],'Interpreter','latex');
     ylim([0,max(fieldvsz,[],'all')])
     xlim([0,10])
+    text(0.05,0.9,letters{xi},'Units','normalized',...
+        'FontUnits','centimeters','FontSize',0.8,'interpreter','latex')
+    
     
 end % xi
 

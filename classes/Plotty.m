@@ -65,7 +65,7 @@ classdef Plotty < handle & OsirisDenormalizer
         ax_density;
         ax_phasespace;
         tile_handle;
-        include_lineout;
+
 
 
         ylineflag;
@@ -95,6 +95,9 @@ classdef Plotty < handle & OsirisDenormalizer
         extradatadir;
         on_axis;
         species_to_plot;
+
+        std_den_n;
+        std_fld_n;
 
 
 
@@ -153,7 +156,7 @@ classdef Plotty < handle & OsirisDenormalizer
             % (plot_field_density) Specifiy which property to plot, or if both
             p.addParameter('property_plot', {'wakefields','density'}, @(x) any(ismember(x,{'wakefields','density','phasespace'})));
             
-            p.addParameter('species_to_plot', {'proton_beam'}, @(x) any(ismember(x,{'proton_beam','electrons_seed','electrons'})));
+            p.addParameter('species_to_plot', {'proton_beam'}, @(x) any(ismember(x,{'proton_beam','electron_seed','electrons'})));
             
             % ...
             p.addParameter('include_phasespace', false, @(x) islogical(x) || x == 0 || x == 1);
@@ -176,6 +179,8 @@ classdef Plotty < handle & OsirisDenormalizer
             p.addParameter('plot_scale', 'linear', @(x) any(ismember(x,{'linear','log'})));
             p.addParameter('plot_density_lims', [-inf inf], @(x) isfloat(x));
             p.addParameter('plot_field_lims', [-inf inf], @(x) isfloat(x));
+            p.addParameter('std_den_n', 2, @(x) isfloat(x) && (x > 0));
+            p.addParameter('std_fld_n', 3, @(x) isfloat(x) && (x > 0));
 
             % figure number
             p.addParameter('fig_number', 1, @(x) isfloat(x) && x > 0);
@@ -216,6 +221,8 @@ classdef Plotty < handle & OsirisDenormalizer
             obj.plot_scale            = p.Results.plot_scale;
             obj.plot_density_lims     = p.Results.plot_density_lims;
             obj.plot_field_lims       = p.Results.plot_field_lims;
+            obj.std_den_n             = p.Results.std_den_n;
+            obj.std_fld_n             = p.Results.std_fld_n;
             obj.fig_number            = p.Results.fig_number;
             obj.exlegends             = p.Results.exlegends;
             obj.extitles              = p.Results.extitles;
@@ -353,8 +360,19 @@ classdef Plotty < handle & OsirisDenormalizer
             % the standard deviation is used as a measure the avoid
             % noisy peaks that sets a wrong scale for the opaqueness
             % get 3 times the std deviation with no weights
-            meanstd_field = 5*std(abs(field_plot),[],'all')+eps;
+            
+            meanstd_field_slice = zeros(1,10);
 
+            for i_slice = 1:10
+                slice_size = round(size(field_plot),2);
+                if i_slice < 10
+                    field_plot_slice_temp = abs(field_plot(:,slice_size*(i_slice-1)+1:slice_size*i_slice));
+                else
+                    field_plot_slice_temp = abs(field_plot(:,slice_size*(i_slice-1)+1:end));
+                end
+                meanstd_field_slice(i_slice) = obj.std_fld_n*std(field_plot_slice_temp,[],'all') + mean(field_plot_slice_temp,'all');
+            end
+            meanstd_field = max(meanstd_field_slice);
 
             if isempty(obj.tile_handle)
                 obj.tile_handle = tiledlayout(1,1);
@@ -392,6 +410,7 @@ classdef Plotty < handle & OsirisDenormalizer
             p.addParameter('tile_number', 0, @(x) isfloat(x));
             p.addParameter('plot_number', 1, @(x) isfloat(x));
             p.addParameter('grad_color_triplet', 0, @(x) isfloat(x));
+            p.addParameter('percentile_density', 95, @(x) isfloat(x) && (x <= 100) && (x >= 0));
 
             p.parse(varargin{:});
 
@@ -401,14 +420,7 @@ classdef Plotty < handle & OsirisDenormalizer
             tile_number        = p.Results.tile_number;
             plot_number        = p.Results.plot_number;
             grad_color_triplet = p.Results.grad_color_triplet;
-
-
-            switch obj.species
-                case {'positrons','electrons'}
-                    density_plot = (density_plot - obj.plasmaden);
-%                     density_plot = density_plot - min(density_plot,[],'all');
-%                     a = 1;
-            end
+            percentile_density = p.Results.percentile_density;
 
             switch obj.plot_scale
                 case 'log'
@@ -416,30 +428,73 @@ classdef Plotty < handle & OsirisDenormalizer
                 case 'linear'
                     density_plot_l = (density_plot);
             end % switch plot scale
-            %  clear density_plot
+            clear density_plot
+            
+
+            switch obj.species
+                case {'positrons','electrons'}
+                    if max(density_plot_l,[],'all') < 1.5*mean(density_plot_l,'all')
+                        min_density_transverse_slice = zeros(1,10);
+                        mean_density_transverse_slice = zeros(1,10);
+
+                        for i_slice = 1:6
+                            slice_size = round(size(density_plot_l,1)/10);
+                            if i_slice < 10
+                                density_transverse_slice = density_plot_l(slice_size*(i_slice-1)+1:slice_size*i_slice,:);
+                            else
+                                density_transverse_slice = density_plot_l(slice_size*(i_slice-1)+1:end,:);
+                            end
+                            mean_density_transverse_slice(i_slice) = mean(density_transverse_slice,'all');
+                            min_density_transverse_slice(i_slice) = min(density_transverse_slice,[],'all');
+                        end
+                        ind_density = min_density_transverse_slice > 0.8*median(mean_density_transverse_slice);
+                        min_min_density = min(min_density_transverse_slice(ind_density));
+                        density_plot_l = density_plot_l - min_min_density;
+
+                        density_plot_l(density_plot_l < 0) = 0;
+                    end
+            end
 
 
 
+            % stablish the opaque index
+            % the standard deviation is used as a measure the avoid
+            % noisy peaks that sets a wrong scale for the opaqueness
+            % get 3 times the std deviation with no weights
 
+            meanstd_density_slice_max = zeros(1,10);
+            meanstd_density_slice_min = zeros(1,10);
+
+            for i_slice = 1:10
+                slice_size = round(size(density_plot_l,2)/10);
+                if i_slice < 10
+                    density_plot_slice_temp = density_plot_l(:,slice_size*(i_slice-1)+1:slice_size*i_slice);
+                else
+                    density_plot_slice_temp = density_plot_l(:,slice_size*(i_slice-1)+1:end);
+                end
+                density_plot_slice_temp(density_plot_slice_temp == 0) = [];
+
+                meanstd_density_slice_max(i_slice) = obj.std_den_n*std(density_plot_slice_temp,[],'all') + mean(density_plot_slice_temp,'all');
+                meanstd_density_slice_min(i_slice) = -obj.std_den_n*std(density_plot_slice_temp,[],'all') + mean(density_plot_slice_temp,'all');
+                
+            end % for i_slice
+
+
+            density_upper = prctile(abs(density_plot_l(density_plot_l ~= 0)),percentile_density);
 
             if obj.mirror_flag
                 density_plot_mirrored = [flip(density_plot_l);density_plot_l];
             else
                 density_plot_mirrored = density_plot_l;
             end
-            clear density_plot_l
 
-            % stablish the opaque index
-            % the standard deviation is used as a measure the avoid
-            % noisy peaks that sets a wrong scale for the opaqueness
-            % get 3 times the std deviation with no weights
-            meanstd_density = 3*std(density_plot_mirrored,[],'all') + eps;
+            %clear density_plot_l
+
             max_opaqueness = 1;
-            ind_opaque = max_opaqueness*density_plot_mirrored;
-            ind_opaque(density_plot_mirrored > meanstd_density) = max_opaqueness*meanstd_density;
-            ind_opaque(density_plot_mirrored < -meanstd_density) = -max_opaqueness*meanstd_density;
-            %ind_opaque = ind_opaque/(2*max_opaqueness*meanstd_density) + 0.5;
-            ind_opaque = ind_opaque/(max_opaqueness*meanstd_density);
+            ind_opaque = max_opaqueness*abs(density_plot_mirrored);
+            ind_opaque(abs(density_plot_mirrored) > density_upper) = max_opaqueness*density_upper;
+            ind_opaque = ind_opaque/(max_opaqueness*density_upper);
+            
 
             if isempty(obj.tile_handle)
                 obj.tile_handle = tiledlayout(1,1);
@@ -461,8 +516,13 @@ classdef Plotty < handle & OsirisDenormalizer
                 case 'log'
                     imagesc(obj.ax_density,'XData',z_plot,'YData',r_plot,'CData',density_plot_mirrored);
                 case 'linear'
-                    imagesc(obj.ax_density,'XData',z_plot,'YData',r_plot,'CData',double(abs(density_plot_mirrored)>=0),'alphadata',ind_opaque);
-                    %                     grad = colorGradient([1 1 1],[0 0 0],2);
+                    imagesc(obj.ax_density,'XData',z_plot,'YData',r_plot,'CData',ones(size(density_plot_mirrored)),'alphadata',ind_opaque);
+                    grad = colorGradient([1 1 1],[0 0 0],2);
+                    
+%                     imagesc(obj.ax_density,'XData',z_plot,'YData',r_plot,'CData',(ind_opaque)/2e14*100);
+%                     cc = colorbar;
+%                     cc.Label.String = '% of plasma density';
+
                     switch plot_number
                         case 1
                             grad = [1 1 1; 0 0 0];
@@ -482,7 +542,8 @@ classdef Plotty < handle & OsirisDenormalizer
                         grad = grad_color_triplet;
                     end
 
-                    colormap(obj.ax_density,grad);
+                  colormap(obj.ax_density,grad);
+%                     colormap(obj.ax_density,gray);
 
             end % switch plot scale
 
@@ -568,8 +629,7 @@ classdef Plotty < handle & OsirisDenormalizer
             p.addParameter('xlineflag', false, @(x) islogical(x) || x == 0 || x == 1);
             p.addParameter('ylinepos', [0,0], @(x) isfloat(x));
             p.addParameter('xlinepos', [0,0], @(x) isfloat(x));
-            p.addParameter('include_lineout', 'no', @(x) any(ismember(x,{'no',...
-                'both','field_lineout','density_profile','phasespace_lineout'})));
+            
             p.addParameter('include_field_lineout', false, @(x) islogical(x) || x == 0 || x == 1 );
             p.addParameter('include_density_profile', false, @(x) islogical(x) || x == 0 || x == 1);
             p.addParameter('include_phasespace_profile', false, @(x) islogical(x) || x == 0 || x == 1);
@@ -586,13 +646,9 @@ classdef Plotty < handle & OsirisDenormalizer
             obj.xlineflag           = p.Results.xlineflag;
             obj.ylinepos            = p.Results.ylinepos;
             obj.xlinepos            = p.Results.xlinepos;
-            obj.include_lineout     = p.Results.include_lineout;
-            obj.include_field_lineout = ...
-                p.Results.include_field_lineout;
-            obj.include_density_profile = ...
-                p.Results.include_density_profile;
-            obj.include_phasespace_profile = ...
-                p.Results.include_phasespace_profile;
+            obj.include_field_lineout = p.Results.include_field_lineout;
+            obj.include_density_profile = p.Results.include_density_profile;
+            obj.include_phasespace_profile = p.Results.include_phasespace_profile;
 
             fontsize_all = 20;
 
@@ -649,9 +705,6 @@ classdef Plotty < handle & OsirisDenormalizer
                     fig_double.OuterPosition = plot_position;
                 end
 
-                % species_to_plot = {'electrons'};
-%                 species_to_plot = {'proton_beam','electrons'};
-
                 % cell initialization
                 field_plot_save = cell(2,1);
                 r_plot_save = cell(2,1);
@@ -664,6 +717,8 @@ classdef Plotty < handle & OsirisDenormalizer
                 z_plot_cell = cell(length(obj.species_to_plot)*2,1);
                 z_lineout_den_cell = cell(length(obj.species_to_plot)*2,1);
                 z_lineout_fld_cell = cell(length(obj.species_to_plot)*2,1);
+
+                letters = {'a)','b)','c)','d)'};
 
                 for i_ex = 1:i_secondimagesc %-------- extra datadir loop
 
@@ -748,7 +803,6 @@ classdef Plotty < handle & OsirisDenormalizer
                                 z_lineout_den_cell{i_den+2*(i_ex-1)} = z_lineout_den_temp;
                                 obj.plot_density('density_plot',density_plot_temp,...
                                     'r_plot',r_plot_temp,'z_plot',z_plot_temp,'tile_number',i_ex,'plot_number',i_den);
-
                             end
                             obj.ax_density.FontSize = fontsize_all;
                         end
@@ -757,7 +811,7 @@ classdef Plotty < handle & OsirisDenormalizer
 
                     end
 
-                    if strcmp(obj.property_plot,'both')
+                    if all(ismember(obj.property_plot,{'wakefields','density'}))
                         obj.ax_field.Position = obj.ax_density.Position;
                         linkaxes([obj.ax_field,obj.ax_density],'xy')
                     end
@@ -863,11 +917,20 @@ classdef Plotty < handle & OsirisDenormalizer
                         obj.property_plot = save_property_plot;
                     end
 
+                    text(0.97,0.18,letters{i_ex},'Units','normalized',...
+                        'FontUnits','centimeters','FontSize',0.8,'interpreter','latex')
+
                 end % --------------- for i_ex
 
 
                 if obj.title_flag
-                    title(obj.tile_handle,['z = ',num2str(obj.propagation_distance/100,3),' m',''],'Interpreter','Latex','FontSize',fontsize_all)
+                    if obj.dump == 0
+                        title(obj.tile_handle,['z = ',num2str(0),' m',''],'Interpreter','Latex','FontSize',fontsize_all)
+                    else
+
+                    title(obj.tile_handle,['z = ',num2str(obj.propagation_distance/100+0.07,3),' m',''],'Interpreter','Latex','FontSize',fontsize_all)
+%                                    title(obj.tile_handle,['z = ','0',' m',''],'Interpreter','Latex','FontSize',fontsize_all)
+                    end
                 end
 
                 if include_quivers %return values of r_plot if quivers were used
@@ -883,9 +946,14 @@ classdef Plotty < handle & OsirisDenormalizer
                     obj.ax_phasespace.XTickLabel = [];
                 end
 
+                
+
+
+                % end of 2D images
+
                 if obj.include_density_profile
 
-                    int_option = 'sum'; % just sum = density
+                    int_option = 'lineout'; % just sum = density
                     % long_profile = obj.cylindrical_radial_integration(r_lineplot(ir)/10,density_plot(ir,:),int_option); %just sum
                     %                     long_profile = density_plot(obj.lineout_point,:);
                     % HARD CODED
@@ -920,14 +988,14 @@ classdef Plotty < handle & OsirisDenormalizer
                                     long_profile = sum(density_plot(ir,:));
                                 case 'lineout'
                                     ir = find(ir);
-                                    if ir(end)<5
-                                        ir(end) = 5;
+                                    if ir(end)<1
+                                        ir(end) = 1;
                                         warning('Changed trans. limit to cell 5 to avoid noise near axis')
                                     end
-                                    long_profile = density_plot(ir(end),:);
+                                    long_profile = density_plot(1:6:32,:);
 
                             end
-                            long_profile = smooth(long_profile,obj.plasma_wavelength/13.62/8,'loess');
+                            %long_profile = smooth(long_profile,obj.plasma_wavelength/13.62/8,'loess');
 
 
                             switch i_den
@@ -937,14 +1005,27 @@ classdef Plotty < handle & OsirisDenormalizer
                                     grad = [221,110,15]/255;
                             end
 
-                            %long_profile = smooth(long_profile,obj.plasma_wavelength/13.62/8,'loess');
+
+%                             gradgrad = colorGradient([25, 25, 112]/256,[173, 216, 230]/256,6);
+%                             colororder((gradgrad));
+                            long_profile = smooth(long_profile,obj.plasma_wavelength/13.62/8,'loess');
                             hold on
-                            plongprofile = plot(z_lineout_den(1:length(long_profile)),long_profile,'color',grad);
+                            plongprofile(i_den) = plot(z_lineout_den(1:length(long_profile)),long_profile,'color',grad); %xx
+%                             if i_den == 1
+%                             plongprofile = plot(z_lineout_den(1:length(long_profile)),100*(-long_profile+2e14)/2e14);
+%                             elseif i_den == 2
+%                             %long_profile = smooth(long_profile,obj.plasma_wavelength/13.62/8,'loess');
+%                             long_profile = density_plot(31:-6:1,:);
+%                             long_profile = smoothdata(long_profile,2,'sgolay','SmoothingFactor',0.8);
+% %                               colororder((gradgrad));
+%                             plongprofile = plot(z_lineout_den(1:length(long_profile)),100*(-long_profile(1:end-1,:))/2e14,'--');
+%                             end
                             hold off
+%                              legend('0.007 mm','0.051','0.095','0.14','0.18','0.02','fontsize',8);
                         end
 
 
-
+                    
 
                     end % for species to plot
 
@@ -975,7 +1056,7 @@ classdef Plotty < handle & OsirisDenormalizer
                         if isfile(species_fullpath)
 
                             hold on
-                            long_profile_e2 = obj.cylindrical_radial_integration(r_lineplot(ir)/10,abs(density_plot_e2(ir,:)),int_option); %just sum
+                            long_profile_e2 = obj.cylindrical_radial_integration(r_lineplot(ir)/10,abs(density_plot_e2(ir,:)),'sum'); %just sum
                             long_profile_e2 = smooth(long_profile_e2,obj.plasma_wavelength/13.62/8,'loess');
                             plongprofile_e2 = plot(z_lineout2,long_profile_e2,'color',[221,110,15]/255);
                             hold off
@@ -985,14 +1066,14 @@ classdef Plotty < handle & OsirisDenormalizer
 
                         obj.justPath = 0;
 
-                        leg_handle = legend([plongprofile,plongprofile2],obj.extitles,'Interpreter','Latex');
+                        leg_handle = legend([plongprofile(1),plongprofile2],obj.exlegends,'Interpreter','Latex');
                         leg_handle.AutoUpdate = 'off';
                     end %----------------------------- new ex
 
                     ax_longprofile.XDir = 'reverse';
-                    ax_longprofile.YTick = [];
+                    ax_longprofile.YTick = []; %xx
 
-                    if strcmp(obj.include_lineout,'density_profile')
+                    if obj.include_density_profile && ~obj.include_field_lineout
                         %  ax_longprofile.XTick = [z_lineplot];
                         %  ax_longprofile.XTickLabel = [z_lineplot];
                         xlabel('$\xi$ (cm)','Interpreter','Latex');
@@ -1007,11 +1088,15 @@ classdef Plotty < handle & OsirisDenormalizer
                     xlim(obj.ax_density.XLim)
                     ylim(obj.plot_density_lims);
                     if ~strcmp(int_option,'just_sum')
-                        ylabel({'charge','(arb. units)'},'Interpreter','Latex');
+                        ylabel({'charge','(arb. units)'},'Interpreter','Latex'); %xx
+%                         ylabel({'$\%$ of plasma',' density'},'Interpreter','Latex');
                     else
                         ylabel({'density','(arb. units)'},'Interpreter','Latex');
                     end
                     ax_longprofile.FontSize = fontsize_all;
+
+                    text(0.97,0.18,letters{3},'Units','normalized',...
+                        'FontUnits','centimeters','FontSize',0.8,'interpreter','latex')
 
                 end % if include density profile
 
@@ -1059,7 +1144,7 @@ classdef Plotty < handle & OsirisDenormalizer
 
                 end % incldue alpha
 
-                %if ismember(obj.include_lineout,{'field_lineout','both'})
+                
                 if obj.include_field_lineout
 
                     ax_longprofile.XTickLabel = [];
@@ -1108,13 +1193,6 @@ classdef Plotty < handle & OsirisDenormalizer
                     ax_lineout.FontSize = fontsize_all;
 
                     xlim(obj.ax_field.XLim);
-
-                    if strcmp(obj.include_lineout,'both')
-
-                        %                         ax_longprofile.XTickLabel = [];
-                        %                         ax_longprofile.XTick = [z_lineplot];
-
-                    end
                     ylim(obj.plot_field_lims);
 
                     switch obj.wakefields_direction
@@ -1126,6 +1204,9 @@ classdef Plotty < handle & OsirisDenormalizer
                     end
 
                     xlabel('$\xi$ (cm)','Interpreter','Latex');
+
+                    text(0.97,0.18,letters{4},'Units','normalized',...
+                        'FontUnits','centimeters','FontSize',0.8,'interpreter','latex')
 
                 end % if include long profile
 
@@ -1178,10 +1259,10 @@ classdef Plotty < handle & OsirisDenormalizer
 
         function [obj,video] = setup_movie(obj)
 
-            %             movie_dir = ['movies/field_density',obj.include_lineout,'/'];
+            
             movie_dir = ['movies/eps','/'];
 
-            struct_dir = ['save_files/field_density',obj.include_lineout,'/'];
+            struct_dir = ['save_files/field_density','/'];
             if ~isfolder(movie_dir)
                 mkdir(movie_dir);
             end
