@@ -18,11 +18,11 @@ clear;
 
 % file location variables
 datadir = 'fdr_26'; 
-extradatadir = ''; 
+extradatadir = 'conv_ph'; 
 
 dataformat = 'mat';
 useAvg = 0;
-dump_list = [0:10:200];
+dump_list = [0:10:0];
 
 
 % saving plot
@@ -34,10 +34,10 @@ plasmaden = 2e14; % ! 2e14, 7e14
 
 % choose property to plot
 property_plot = {'density','wakefields'}; % density, wakefields, both
-species_to_plot = {'electrons','electron_seed'}; %proton_beam, electron_seed, electrons
+species_to_plot = {'proton_beam','electron_seed'}; %proton_beam, electron_seed, electrons
 include_phasespace = 0; % 0,1
 field_geometry = 'cartesian'; % cartesian, cylindrical
-on_axis = 'int'; % how to get the density profile
+on_axis = 'lineout'; % how to get the density profile
 % int = charge, sum = density, lineout = density
 
 % choose fields to plot

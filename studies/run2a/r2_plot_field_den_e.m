@@ -47,11 +47,11 @@ wakefields_direction = 'trans'; % trans, long
 lineout_point = '0.02'; % cm
 
 % choose species density to plot
-species = {'proton_beam','electrons'};    %proton_beam, electrons,  electron_seed
+species = {'electrons'};    %proton_beam, electrons,  electron_seed
 
 % choose limits (in cm, must denormalize)
 trans_range = [0 0.08];
-xi_range = [1 0];
+xi_range = [3 0];
 plot_density_lims = [0 1e10];
 plot_field_lims = [-inf inf];
 
@@ -167,7 +167,8 @@ P = Plotty('datadir',datadir,'extradatadir',extradatadir,'dataformat',dataformat
 figure(fig_number);
 P.plot_field_density('ylinepos',[-0.02,0.02],'ylineflag',1,...
     'xlinepos',[0.423726],'xlineflag',0,...
-    'include_density_profile',0,'include_field_lineout',0); %#ok<NBRAK> 
+    'include_density_profile',0,'include_field_lineout',0,...
+    'transparency_flag',0); %#ok<NBRAK> 
 
 
 
