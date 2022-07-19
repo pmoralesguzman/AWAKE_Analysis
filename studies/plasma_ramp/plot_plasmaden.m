@@ -16,17 +16,17 @@
 clear;
 
 % file location variables
-datadir = 'fdr_26'; 
+datadir = 'fdr_26e'; 
 extradatadir = ''; 
 movie_dir = 'example_density';
 
 dataformat = 'mat';
 useAvg = 0;
-dump_list = [0:1:200];
+dump_list = [0:10:200];
 
 
 % saving plot
-save_flag = 1;
+save_flag = 0;
 save_format = {'png'}; % fig, pdf
 
 % plasma properties
@@ -34,7 +34,7 @@ plasmaden = 2e14; % ! 2e14, 7e14
 
 % choose property to plot
 property_plot = {'density'}; % density, wakefields, both
-species_to_plot = {'electrons','electron_seed'}; %proton_beam, electron_seed, electrons
+species_to_plot = {'electrons'}; %proton_beam, electron_seed, electrons
 transparency_flag = 0;
 include_phasespace = 0; % 0,1
 field_geometry = 'cartesian'; % cartesian, cylindrical

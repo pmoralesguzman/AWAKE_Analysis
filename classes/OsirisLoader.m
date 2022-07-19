@@ -179,7 +179,7 @@ classdef OsirisLoader < handle
                 'antiproton_seed','proton_beamfront','electrons','positrons',...
                 'density_feature','antiproton_beam'}));
             % for lcode2mat, get raw data
-            p.addParameter('species_list', [], @(x) any(ismember(x,{'proton_beam',...
+            p.addParameter('species_list', {''}, @(x) any(ismember(x,{'proton_beam',...
                 'electrons','electron_bunch','electron_seed','electron_beam',...
                 'antiproton_seed','proton_beamfront','electrons','positrons',...
                 'density_feature','antiproton_beam',''})));
@@ -892,12 +892,12 @@ classdef OsirisLoader < handle
                     antiproton_index = (obj.ndataOut(:,7) < 0) & (obj.ndataOut(:,6) < 1);
                     
                     length_species = 1;
-                    if ~isempty(obj.species_list)    
+                    if ~isempty(obj.species_list{1})    
                         length_species = length(obj.species_list);
                     end
 
                     for ss = 1:length_species
-                        if ~isempty(obj.species_list)    
+                        if ~isempty(obj.species_list{1})    
                             obj.species = obj.species_list{ss};
                         end
                         
@@ -1150,25 +1150,8 @@ classdef OsirisLoader < handle
                     intout = trapz(z,2*pi*trapz(r',(r').*data));
                 case 'simpsons'
                     intout = simpsons(z,2*pi*simpsons(r',(r').*data));
-            end % switch integral type
-        end % cylindrical_integration
-
-        function intout = xxxxradial_integration(r,z,data,varargin)
-            if nargin == 3
-                integral_type = 'sum';
-            else
-                integral_type = varargin{1};
-            end % if nargin
-
-            switch integral_type
-                case 'sum'
-                    dr = r(2) - r(1); dz = z(2) - z(1);
-                    intout = dz*sum(2*pi*dr*((r').*data),2);
-                case 'trapz'
-                    intout = trapz(z,2*pi*trapz(r',(r').*data));
-                case 'simpsons'
-                    intout = simpsons(z,2*pi*simpsons(r',(r').*data));
- 
+                case 'sum_density'
+                    intout = sum(data,'all');
             end % switch integral type
         end % cylindrical_integration
 

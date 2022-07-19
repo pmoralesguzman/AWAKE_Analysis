@@ -1,7 +1,7 @@
 
 %________________________________________________________________________
-% Plot the 2D wakefields together with the proton bunch, or each
-% individually
+% Plot the 2D wakefields together with the density of any of the species, 
+% or fields or density individually
 %
 % Osiris 4.4.4
 %
@@ -10,7 +10,7 @@
 % Work in progress 
 %
 % P. I. Morales Guzman
-% Last update: 06/07/2022
+% Last update: 19/07/2022
 %________________________________________________________________________
 
 % close all;
