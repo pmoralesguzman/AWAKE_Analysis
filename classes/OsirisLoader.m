@@ -88,9 +88,13 @@ classdef OsirisLoader < handle
 
         % input, description in parser
         datadir; dataformat; useAvg;
-        property; species; field; raw_dataset; track_dataset; direction;
-        dump; wakefields_direction; lineout_point; lineout_direction;
+        property; species; species_list; field; raw_dataset; track_dataset; 
+        direction;
+        dump; wakefields_direction; 
+        lineout_point; lineout_direction;
+        lineout_point_n;
         plasmaden; phasespace_direction;
+        integration_type;
 
         % output (all in norm. units (n prefix))
         ndataOut; % matrix with the desired data
@@ -105,6 +109,7 @@ classdef OsirisLoader < handle
         % fields (normalized)
         nlongfield; % longitudinal wakefields (Ez)
         ntransfield; % transverse wakefields (Er-Bth)
+        nfield; % any
 
         % species density (normalized)
         nproton_beam; % proton bunch density
@@ -128,12 +133,15 @@ classdef OsirisLoader < handle
 
         % raw_data (normalized)
         nz_raw; % long. pos. of particle
+        nxi_raw; % distance of particle to the front of the bunch
         nr_raw; % trans. pos. of particle
         npz_raw; % momentum in z of particle
         npr_raw; % momentum in r of particle
         npth_raw; % momentum in theta of particle
         nE_raw; % energy of particle
         nlineout; % lineout with desired specifications
+
+        code; % lcode, osiris
 
     end % properties
 
@@ -170,6 +178,11 @@ classdef OsirisLoader < handle
                 'electrons','electron_bunch','electron_seed','electron_beam',...
                 'antiproton_seed','proton_beamfront','electrons','positrons',...
                 'density_feature','antiproton_beam'}));
+            % for lcode2mat, get raw data
+            p.addParameter('species_list', [], @(x) any(ismember(x,{'proton_beam',...
+                'electrons','electron_bunch','electron_seed','electron_beam',...
+                'antiproton_seed','proton_beamfront','electrons','positrons',...
+                'density_feature','antiproton_beam'})));
 
             % For the fields, specify magnetic (b) or electrin (e)
             p.addParameter('field', 'e', @(x) ismember(x,{'e','b'}));
@@ -203,32 +216,37 @@ classdef OsirisLoader < handle
             % Plasma density
             p.addParameter('lcode_dump_factor', 1, @(x) isfloat(x) && x >=0);
 
+            % Which code (relevant for functions working with z_raw: in OSIRIS it is z, is LCODE it is xi)
+            p.addParameter('code', 'lcode', @(x) ismember(x,{'osiris','lcode'}));
+
+            % integration type to get a 1D profile from the 2D images
+            p.addParameter('integration_type', 'sum', @(x) ismember(x,{'sum','trapz','simpsons','sum_density','just_lineout'}));
+
 
             p.parse(varargin{:});
 
-            obj.datadir        = p.Results.datadir;
-            obj.dataformat     = p.Results.dataformat;
-            obj.downsample_z   = p.Results.downsample_z;
-            obj.justPath       = p.Results.justPath;
-            obj.useAvg         = p.Results.useAvg;
-            obj.openrange      = p.Results.openrange;
-            obj.property       = p.Results.property;
-            obj.species        = p.Results.species;
-            obj.field          = p.Results.field;
-            obj.raw_dataset    = p.Results.raw_dataset;
-            obj.track_dataset  = p.Results.track_dataset;
-            obj.direction      = p.Results.direction;
-            obj.dump           = p.Results.dump;
-            obj.plasmaden      = p.Results.plasmaden;
-            obj.wakefields_direction...
-                = p.Results.wakefields_direction;
-            obj.lineout_direction...
-                = p.Results.lineout_direction;
-            obj.lineout_point  = p.Results.lineout_point;
-            obj.trackfile_suffix ...
-                = p.Results.trackfile_suffix;
-            obj.lcode_dump_factor ...
-                = p.Results.lcode_dump_factor;
+            obj.datadir             = p.Results.datadir;
+            obj.dataformat          = p.Results.dataformat;
+            obj.downsample_z        = p.Results.downsample_z;
+            obj.justPath            = p.Results.justPath;
+            obj.useAvg              = p.Results.useAvg;
+            obj.openrange           = p.Results.openrange;
+            obj.property            = p.Results.property;
+            obj.species             = p.Results.species;
+            obj.species_list        = p.Results.species_list;
+            obj.field               = p.Results.field;
+            obj.raw_dataset         = p.Results.raw_dataset;
+            obj.track_dataset       = p.Results.track_dataset;
+            obj.direction           = p.Results.direction;
+            obj.dump                = p.Results.dump;
+            obj.plasmaden           = p.Results.plasmaden;
+            obj.wakefields_direction= p.Results.wakefields_direction;
+            obj.lineout_direction   = p.Results.lineout_direction;
+            obj.lineout_point       = p.Results.lineout_point;
+            obj.trackfile_suffix    = p.Results.trackfile_suffix;
+            obj.lcode_dump_factor   = p.Results.lcode_dump_factor;
+            obj.code                = p.Results.code;
+            obj.integration_type    = p.Results.integration_type;
 
         end % constructor
 
@@ -869,12 +887,6 @@ classdef OsirisLoader < handle
                     %{'ene','p','x','q','w','tag'}
                     % z,r,pz,pr,pa,q,w,id
                     % 1,2, 3, 4, 5,6,7, 8
-
-%                     species_s = {'proton_beam','electron_seed','antiproton_beam',''};
-
-%                     if ~ismember(obj.species,species_s)
-%                         species_s = obj.species;
-%                     end % if selecting another species loke electron_bunch, to have a corret name 
                     
 
                     raw_dataset_s = {'x','p','q','w','tag'};
@@ -882,13 +894,17 @@ classdef OsirisLoader < handle
                     proton_index = (obj.ndataOut(:,7) > 0) & (obj.ndataOut(:,6) < 1);
                     electron_index = (obj.ndataOut(:,7) < 0) & (obj.ndataOut(:,6) > 0.99); % avoid rounding errors
                     antiproton_index = (obj.ndataOut(:,7) < 0) & (obj.ndataOut(:,6) < 1);
-
                     
+                    length_species = 1;
+                    if ~isempty(obj.species_list)    
+                        length_species = length(obj.species_list);
+                    end
 
-                    for ss = 1:1 %(length(species_s)-1)
-                        %obj.species = species_s{ss};
+                    for ss = 1:length_species
+                        if ~isempty(obj.species_list)    
+                            obj.species = obj.species_list{ss};
+                        end
                         
-                        % 2x3g56jh
                         switch obj.species
                             case 'proton_beam'
                                 if ~any(proton_index); continue; end 
@@ -1141,7 +1157,7 @@ classdef OsirisLoader < handle
             end % switch integral type
         end % cylindrical_integration
 
-        function intout = radial_integration(r,z,data,varargin)
+        function intout = xxxxradial_integration(r,z,data,varargin)
             if nargin == 3
                 integral_type = 'sum';
             else
@@ -1156,27 +1172,39 @@ classdef OsirisLoader < handle
                     intout = trapz(z,2*pi*trapz(r',(r').*data));
                 case 'simpsons'
                     intout = simpsons(z,2*pi*simpsons(r',(r').*data));
+ 
             end % switch integral type
         end % cylindrical_integration
 
-        function intout = cylindrical_radial_integration(r,data,varargin)
+        function intout = radial_integration(r,data,varargin)
             if nargin == 2
                 integral_type = 'sum';
+            elseif nargin == 3
+                integral_type = varargin{1};
+                ir = boolean(ones(length(r),1));
             else
                 integral_type = varargin{1};
+                ir = varargin{2}; % r indices 
             end % if nargin
 
             switch integral_type
                 case 'sum'
                     dr = r(2) - r(1);
-                    intout = 2*pi*dr*sum((r').*data);
+                    intout = 2*pi*dr*sum((r(ir)').*data(ir,:));
                 case 'trapz'
-                    intout = 2*pi*trapz(r',(r').*data);
+                    intout = 2*pi*trapz(r(ir)',(r(ir)').*data(ir,:));
                 case 'simpsons'
-                    intout = 2*pi*simpsons(r',(r').*data);
-                case 'just_sum'
-                    dr = r(2) - r(1);
-                    intout = dr*sum(data);
+                    intout = 2*pi*simpsons(r(ir)',(r(ir)').*data(ir,:));
+                case 'sum_density'
+                    intout = sum(data(ir,:));
+                case 'just_lineout'
+                    ir = find(ir);
+                    if ir(end)<2
+                        ir(end) = 2;
+                        warning('Changed lineout point to cell 2 to avoid noise near axis')
+                    end
+                    intout = data(ir(end),:);
+
             end % switch integral type
         end % cylindrical_integration
 

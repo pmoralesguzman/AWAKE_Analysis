@@ -17,8 +17,8 @@ clear;
 % EXPERIMENTAL INFO:
 
 % parameters
-datadir = 'r2l_302_c_pi_e550_l';
-dump_list = [0:100];
+datadir = 'fdr_26';
+dump_list = [0:1:200];
 dataformat = 'mat';
 % species_name = '';
 species_name = 'electron_seed';

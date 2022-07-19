@@ -77,6 +77,7 @@ classdef OsirisDenormalizer < handle & OsirisLoader
         
         % raw_data
         z_raw; % long. pos. of particle
+        xi_raw; % distance of particle to bunch front
         r_raw; % trans. pos. of particle
         pz_raw; % momentum in z of particle
         pr_raw; % momentum in r of particle
@@ -159,6 +160,9 @@ classdef OsirisDenormalizer < handle & OsirisLoader
                 obj.simulation_window = obj.n_simulation_window*denorm_factor;
                 obj.propagation_distance = obj.n_propagation_distance*denorm_factor;
                 obj.propagation_distance_m = obj.n_propagation_distance*obj.c_m/obj.plasmafreq;
+
+                obj.z_raw = obj.nz_raw*denorm_factor;
+                obj.r_raw = obj.nr_raw*denorm_factor;
                 varargout{1} = obj;
             else
                 varargout{1} = varargin{1}*denorm_factor;
@@ -230,6 +234,7 @@ classdef OsirisDenormalizer < handle & OsirisLoader
             
             obj.transfield = obj.ntransfield*denorm_factor;
             obj.longfield  = obj.nlongfield*denorm_factor;
+            obj.field     = obj.nfield*denorm_factor;
             
             % if there is some lineout
             if ~isempty(obj.nlineout)
@@ -370,23 +375,53 @@ classdef OsirisDenormalizer < handle & OsirisLoader
             end % if assign after trim
         end % trim_data
         
-        function obj = trim_rawdata(obj)
+        function varargout = trim_rawdata(obj)
             % trim the data in normalized units
             % don't forget the assign the data afterwards
             
             obj.denorm_distance();
-                        
-            z_ind = obj.z_raw > max(obj.z) - obj.xi_range(1) & ... %large
-                obj.z_raw <= max(obj.z) - obj.xi_range(2); % small
+            code_flag = mean(obj.nz_raw) < 0; 
+            % true = lcode, false = osiris
+
+            if code_flag
+                xi = abs(obj.z_raw);
+                z_ind = (xi < obj.xi_range(1)) & (xi >= obj.xi_range(2));
+                
+            else
+                xi = obj.dtime + obj.simulation_window - obj.z_raw;
+                z_ind = (xi < obj.xi_range(1)) & (xi >= obj.xi_range(2));
+            end % if nz raw < 0
             
             r_ind = obj.r_raw >= obj.trans_range(1) & ...
                 obj.r_raw < obj.trans_range(2);
             
             rz_ind = r_ind & z_ind;
             
+            obj.nr_raw= obj.nr_raw(rz_ind);
+            obj.nz_raw= obj.nz_raw(rz_ind);
             obj.r_raw = obj.r_raw(rz_ind);
             obj.z_raw = obj.z_raw(rz_ind);
-            obj.q_raw = obj.q_raw(rz_ind);
+
+            if code_flag
+                obj.nxi_raw = abs(obj.nz_raw);
+                obj.xi_raw = abs(obj.z_raw);
+            else
+                obj.nxi_raw = obj.dtime + obj.simulation_window - obj.nz_raw;
+                obj.xi_raw = obj.dtime + obj.simulation_window - obj.z_raw;
+            end
+
+            if ~isempty(obj.q_raw); obj.q_raw = obj.q_raw(rz_ind); end
+            if ~isempty(obj.npr_raw); obj.npr_raw = obj.npr_raw(rz_ind); end
+            if ~isempty(obj.pr_raw); obj.pr_raw = obj.pr_raw(rz_ind); end
+            if ~isempty(obj.npz_raw); obj.npz_raw = obj.npz_raw(rz_ind); end
+            if ~isempty(obj.pz_raw); obj.pz_raw = obj.pz_raw(rz_ind); end
+            if ~isempty(obj.npth_raw); obj.npth_raw = obj.npth_raw(rz_ind); end
+            if ~isempty(obj.pth_raw); obj.pth_raw = obj.pz_raw(rz_ind); end
+            if ~isempty(obj.nE_raw); obj.nE_raw = obj.nE_raw(rz_ind); end
+            if ~isempty(obj.E_raw); obj.E_raw = obj.E_raw(rz_ind); end
+
+            varargout{1} = obj;
+            varargout{2} = rz_ind;
             
         end % trim_rawdata
         

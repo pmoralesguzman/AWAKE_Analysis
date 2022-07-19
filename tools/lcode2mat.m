@@ -12,21 +12,20 @@
 %________________________________________________________________________
 
 % input
-%location = 'C:/LCODE_MPP'; % C:/LCODE_HP, E:/LCODE_MPP, /home/iwsatlas1/pmorales/LCODE_MPP/
-% datadirs = {'DW_lcode_x5_t4','DW_lcode_x5_r4','DW_lcode_x5_z4','DW_lcode_x5_m4'};
-datadirs = {'r2l_2_noe_2s'};
+datadirs = {'fdr_26'};
 
-properties = {'density'}; % raw 'fields'
-% properties = {'fields','density','raw'}; % raw 'fields'
-speciess = {'proton_beam'};
-% speciess = {'electron_seed'};
+properties = {'raw','fields'}; % 'raw','density','fields'
+%speciess = {'proton_beam'};
+speciess = {'electron_seed'};
+species_list = {'electron_seed','proton_beam'}; % species list to get the raw data, empty means use only the one indicated in speciess
 
-dump_list = [0:100];
+dump_list = [0:1:200];
 
 lcode_dump_factor = 1;
 
 
-O = OsirisDenormalizer('plasmaden',2e14,'lcode_dump_factor',lcode_dump_factor);
+O = OsirisDenormalizer('plasmaden',2e14,'lcode_dump_factor',lcode_dump_factor,...
+    'species_list',species_list);
 
 
 for ii = 1:length(datadirs)

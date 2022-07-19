@@ -16,7 +16,7 @@ function CreatePathClass(varargin)
 
 if nargin == 0
     force = false;
-else
+elseif nargin == 1
     force = true;
 end
 
@@ -24,14 +24,13 @@ pathCell = regexp(path, pathsep, 'split');
 
 paths = {'../AWAKE_Analysis',... all directories with analysis code
     'E:/AWAKE_Data',... for the external hard drive (must be set to E:/)
-    'D:/AWAKE_Data_HD',... for the hard drive in the work laptop
-    'D:\LCODE_CERN',...
-    'E:\AWAKE_Data_SSD',...
-    'C:/AWAKE_Data_MPP',... for the hard drive desktop PC at MPP
-    'C:/AWAKE_Data_laptop',... for the hard drive in the personal laptop
-    '../simulations',... for the server
-    '../../AWAKE_Data_MPP/',...
-    '../../../../../local/scratch/pmorales/real_studies/'};
+    'D:/AWAKE_Data_HD',... for the SSD in the work laptop
+    'D:/LCODE_CERN',... for the hard drive desktop PC at CERN
+    'E:/AWAKE_Data_SSD',... for the portable SSD
+    'C:/AWAKE_Data_laptop',... for the SSD in the personal laptop
+    '../simulations',... for Cobra
+    '../lcode_simulations',... for Cobra
+    '../../../../../local/scratch/pmorales/real_studies/'}; % for the hard drive desktop PC at MPP
 
 
 for pp = 1:length(paths)
