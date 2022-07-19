@@ -21,7 +21,7 @@ datadir = 'fdr_26';
 dump_list = [0:1:200];
 dataformat = 'mat';
 % species_name = '';
-species_name = 'electron_seed';
+species_name = 'proton_beam';
 xi_step_size = 0.02;
 
 % save parameters

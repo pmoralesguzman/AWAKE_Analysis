@@ -14,10 +14,10 @@
 % input
 datadirs = {'fdr_26'};
 
-properties = {'raw','fields'}; % 'raw','density','fields'
+properties = {'density'}; % 'raw','density','fields'
 %speciess = {'proton_beam'};
-speciess = {'electron_seed'};
-species_list = {'electron_seed','proton_beam'}; % species list to get the raw data, empty means use only the one indicated in speciess
+speciess = {'electrons'};
+species_list = {''}; % species list to get the raw data, empty means use only the one indicated in speciess
 
 dump_list = [0:1:200];
 
