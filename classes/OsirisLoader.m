@@ -849,10 +849,6 @@ classdef OsirisLoader < handle
                 case 'f'; temp_direction = '3';
             end
 
-            if strcmp(obj.raw_dataset,'ene') || strcmp(obj.raw_dataset,'q') || strcmp(obj.raw_dataset,'tag')
-                temp_direction = '';
-            end
-
             % Names of files (with correct numbering)
             dump_char = sprintf('%06.6d',obj.dump);
             avg = ''; if obj.useAvg; avg = '-savg'; end
@@ -1078,7 +1074,7 @@ classdef OsirisLoader < handle
 
             end % switch property
 
-        end %lcode2mat
+        end % read_lcode
 
         function openID = get_openID(obj)
 
