@@ -13,7 +13,7 @@ lcode_dump_factor=lcodedumpfactor;
 %properties = {'raw'}; % 'raw','density','fields'
 %speciess = {'proton_beam'};
 %speciess = {'electron_seed'};
-%species_list = {''}; % species list to get the raw data, empty means use only the one indicated in speciess
+species_list = {''}; % species list to get the raw data, empty means use only the one indicated in speciess
 
 %dump_list = [0:1:200];
 
