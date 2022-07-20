@@ -31,8 +31,8 @@ paths = {'../AWAKE_Analysis',... all directories with analysis code
     '../simulations',... for Cobra
     '../lcode_simulations',... for Cobra
     '../../../../../local/scratch/pmorales/real_studies/',...  for the hard drive desktop PC at MPP
-    '../../../../../../../../Volumes/SanDisk/HIWI/test_runs',... for SSD in E's personal laptop
-    '../../../../../../../../Volumes/SanDisk/HIWI/AWAKE_Data',... for SSD in E's personal laptop
+    '../../../../../../../../Volumes/SanDisk/HIWI/test_runs/',... for SSD in E's personal laptop
+    '../../../../../../../../Volumes/SanDisk/AWAKE_Data/',... for SSD in E's personal laptop
     '../../../../../local/scratch/elainedv'}; % for the hard drive desktop PC at MPP
 
 

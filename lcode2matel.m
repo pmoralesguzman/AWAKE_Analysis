@@ -1,4 +1,4 @@
-function [] = lcode2matel(datadir,propertiess,species,dumplist,lcodedumpfactor,plasmaden)
+function [] = lcode2matel(datadir,propertiess,species,speciess_list,dumplist,lcodedumpfactor,plasmaden)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 datadirs=datadir;
@@ -13,7 +13,7 @@ lcode_dump_factor=lcodedumpfactor;
 %properties = {'raw'}; % 'raw','density','fields'
 %speciess = {'proton_beam'};
 %speciess = {'electron_seed'};
-species_list = {''}; % species list to get the raw data, empty means use only the one indicated in speciess
+species_list = speciess_list; % species list to get the raw data, empty means use only the one indicated in speciess
 
 %dump_list = [0:1:200];
 
