@@ -1,7 +1,6 @@
 function [] = make_densityel(datadirs,dumplist,speciesname,xistepsize)
 %UNTITLED6 Summary of this function goes here
 %   Detailed explanation goes here
-clear;
 % close all;
 
 % EXPERIMENTAL INFO:
